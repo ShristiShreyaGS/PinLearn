@@ -36,3 +36,25 @@
     transform: rotate(360deg);
   }
 }
+.ticker {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+ 
+}
+
+.ticker-text {
+  display: inline-block;
+  animation: moveText 10s linear infinite;
+  
+}
+
+@keyframes moveText {
+  from {
+    transform: translateX(100vw);
+  }
+
+  to {
+    transform: translateX(-100%);
+  }
+}

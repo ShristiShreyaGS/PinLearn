@@ -1,0 +1,104 @@
+.interests-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 40px;
+  background: #f7f7f7;
+}
+
+.interests-page h1 {
+  margin-bottom: 10px;
+  font-size: 36px;
+}
+
+.interests-page > p {
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.interest-grid {
+  width: 600px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.interest-grid button {
+  padding: 20px;
+
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 18px;
+
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.interest-grid button:hover {
+  border-color: #111;
+}
+
+.continue-button {
+  margin-top: 25px;
+
+  padding: 14px 40px;
+
+  border: none;
+  border-radius: 25px;
+
+  background: #111;
+  color: white;
+
+  font-size: 16px;
+  cursor: pointer;
+}
+.interest-grid button.selected {
+  background: #111;
+  color: white;
+  border-color: #111;
+}
+.interest-card {
+  padding: 20px;
+  background: white;
+  color: #222;
+
+  border: 2px solid #e0e0e0;
+  border-radius: 18px;
+
+  font-size: 16px;
+  font-weight: 500;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+.interest-card.selected {
+  background: #222;
+  color: white;
+  border-color: #222;
+}
+.continue-button:disabled {
+  background: #d3d3d3;
+  color: #888;
+  cursor: not-allowed;
+}
+.interest-pills {
+  display: flex;
+  gap: 10px;
+
+  margin-top: 25px;
+}
+
+.interest-pills span {
+  padding: 8px 16px;
+
+  border-radius: 30px;
+
+  background: #222;
+  color: white;
+
+  font-size: 13px;
+  font-weight: 500;
+}

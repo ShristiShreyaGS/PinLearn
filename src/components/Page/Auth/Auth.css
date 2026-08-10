@@ -1,0 +1,156 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  font-family: Arial, sans-serif;
+  background: #f7f7f7;
+}
+
+
+/* LEFT SIDE */
+
+.auth-visual {
+  width: 55%;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+
+  background: #e8e1d8;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.visual-overlay {
+  width: 420px;
+  position: relative;
+  z-index: 2;
+}
+
+.visual-overlay h2 {
+  font-size: 48px;
+  line-height: 1.05;
+  margin: 0 0 20px;
+}
+
+.visual-overlay p {
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+
+/* FLOATING TOPIC CARDS */
+
+.floating-card {
+  position: absolute;
+
+  padding: 18px 28px;
+
+  background: white;
+  border-radius: 20px;
+
+  font-size: 18px;
+  font-weight: 600;
+
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.card-one {
+  top: 15%;
+  left: 10%;
+  transform: rotate(-8deg);
+}
+
+.card-two {
+  top: 12%;
+  right: 10%;
+  transform: rotate(7deg);
+}
+
+.card-three {
+  bottom: 18%;
+  left: 12%;
+  transform: rotate(6deg);
+}
+
+.card-four {
+  bottom: 12%;
+  right: 12%;
+  transform: rotate(-7deg);
+}
+
+
+/* RIGHT SIDE */
+
+.auth-section {
+  width: 45%;
+  min-height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: white;
+}
+
+.auth-container {
+  width: 350px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-container h1 {
+  text-align: center;
+  font-size: 34px;
+  margin: 0;
+}
+
+.auth-container > p {
+  text-align: center;
+  color: #666;
+  margin: 0 0 15px;
+}
+
+.auth-container input {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 15px 16px;
+
+  border: 1px solid #d0d0d0;
+  border-radius: 16px;
+
+  font-size: 15px;
+  outline: none;
+}
+
+.auth-container input:focus {
+  border-color: #555;
+}
+
+.auth-container button {
+  width: 100%;
+
+  padding: 15px;
+
+  border: none;
+  border-radius: 25px;
+
+  background: #111;
+  color: white;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.auth-container button:hover {
+  background: #333;
+}
+
+.signup-text span {
+  font-weight: 600;
+  cursor: pointer;
+}

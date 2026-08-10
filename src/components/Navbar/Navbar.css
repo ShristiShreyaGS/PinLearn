@@ -1,0 +1,46 @@
+.navbar {
+  height: 70px;
+  display: flex;
+  align-items: center;
+  padding: 0 30px;
+  gap: 30px;
+  border-bottom: 1px solid #eee;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.nav-links {
+  display: flex;
+  gap: 25px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #333;
+}
+
+.search-box {
+  flex: 1;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 12px 18px;
+  border: 1px solid #ddd;
+  border-radius: 25px;
+  box-sizing: border-box;
+}
+
+.add-button {
+  border: none;
+  background: none;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.profile {
+  font-weight: 500;
+}
