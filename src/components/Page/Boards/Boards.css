@@ -1,0 +1,57 @@
+.boards-page {
+  padding: 40px;
+}
+
+.boards-page h1 {
+  margin-bottom: 30px;
+}
+
+.boards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.board-card {
+  padding: 25px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.board-card:hover {
+  transform: translateY(-4px);
+}
+.boards-page {
+  margin: 0;
+  padding: 0;
+}
+
+.boards-page h1 {
+  font-size: 2rem;
+  margin-bottom: 24px;
+  color: #0f172a;
+}
+
+.boards-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(280px, 1fr)
+  );
+  gap: 20px;
+}
+
+.board-card {
+  background: white;
+  border-radius: 18px;
+  padding: 20px;
+  border: 1px solid #ececec;
+  transition: all 0.25s ease;
+}
+
+.board-card:hover {
+  transform: translateY(-2px);
+}

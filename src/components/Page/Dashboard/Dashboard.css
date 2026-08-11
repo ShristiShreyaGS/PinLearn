@@ -220,3 +220,50 @@
   cursor: pointer;
   font-weight: 600;
 }
+.board-selector {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 350px;
+  padding: 25px;
+
+  background: white;
+  border-radius: 16px;
+
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+
+  z-index: 1000;
+}
+
+.board-selector h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.board-selector button {
+  display: block;
+  width: 100%;
+
+  padding: 12px;
+  margin: 8px 0;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #f1f1f1;
+
+  cursor: pointer;
+}
+
+.board-selector button:hover {
+  background: #e5e5e5;
+}
+.boards-section {
+  margin: 60px 0;
+  padding: 30px;
+  border-radius: 24px;
+  background: #fafafa;
+  border: 1px solid #eeeeee;
+}

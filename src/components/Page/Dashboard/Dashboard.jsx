@@ -2,12 +2,84 @@ import "./Dashboard.css";
 import ResourceCard from "../../ResourceCard/ResourceCard";
 import { useLocation } from "react-router-dom";
 import { useState } from "react";
-
+import Boards from "../Boards/Boards";
 
 function Dashboard() {
   const routerData=useLocation();
   const selectedInterests=routerData.state?.selectedInterests||[];
   const [savedResources, setSavedResources] = useState([]);
+  const [showCreateBoard, setShowCreateBoard] = useState(false);
+const [newBoardName, setNewBoardName] = useState("");
+  const [boards, setBoards] = useState([
+  {
+    id: 1,
+    name: "React Learning",
+    resources: []
+  },
+  {
+    id: 2,
+    name: "AI Resources",
+    resources: []
+  },
+  {
+    id: 3,
+    name: "Interview Prep",
+    resources: []
+  }
+]);
+const openBoardSelector = (resource) => {
+  setResourceToSave(resource);
+  setShowBoardSelector(true);
+};
+const saveToBoard = (boardId) => {
+
+  setBoards((previousBoards) => {
+
+    return previousBoards.map((board) => {
+
+      if (board.id === boardId) {
+
+        return {
+          ...board,
+          resources: [
+            ...board.resources,
+            resourceToSave
+          ]
+        };
+
+      }
+
+      return board;
+    });
+
+  });
+
+  setShowBoardSelector(false);
+  setResourceToSave(null);
+};
+const createBoard = () => {
+  if (!newBoardName.trim()) {
+    return;
+  }
+
+  const newBoard = {
+    id: Date.now(),
+    name: newBoardName,
+    resources: resourceToSave ? [resourceToSave] : []
+  };
+
+  setBoards((previousBoards) => [
+    ...previousBoards,
+    newBoard
+  ]);
+
+  setNewBoardName("");
+  setShowCreateBoard(false);
+  setShowBoardSelector(false);
+  setResourceToSave(null);
+};
+const [showBoardSelector, setShowBoardSelector] = useState(false);
+const [resourceToSave, setResourceToSave] = useState(null);
   const saveResource = (resource) => {
 
   const alreadySaved = savedResources.some(
@@ -120,7 +192,7 @@ const interestsToRender = selectedInterests.length
         <nav>
           <a href="/">Home</a>
           <a href="/explore">Explore</a>
-          <a href="/boards">My Boards</a>
+          <a href="#boards">My Boards</a>
         </nav>
 
         <button>Profile</button>
@@ -156,6 +228,7 @@ const interestsToRender = selectedInterests.length
     ))}
 
   </div>
+  <div id="boards"><Boards boards={boards} /></div>
   {/* resources below */}
   {interestsToRender.map((interest) => {
 
@@ -201,7 +274,7 @@ const interestsToRender = selectedInterests.length
               <ResourceCard
   key={resource.id}
   resource={resource}
-  onSave={saveResource}
+ onSave={openBoardSelector}
   isSaved={savedResources.some(
     (saved) => saved.id === resource.id
   )}
@@ -225,7 +298,7 @@ const interestsToRender = selectedInterests.length
              <ResourceCard
   key={resource.id}
   resource={resource}
-  onSave={saveResource}
+  onSave={openBoardSelector}
   isSaved={savedResources.some(
     (saved) => saved.id === resource.id
   )}
@@ -249,7 +322,7 @@ const interestsToRender = selectedInterests.length
               <ResourceCard
   key={resource.id}
   resource={resource}
-  onSave={saveResource}
+  onSave={openBoardSelector}
   isSaved={savedResources.some(
     (saved) => saved.id === resource.id
   )}
@@ -273,7 +346,7 @@ const interestsToRender = selectedInterests.length
               <ResourceCard
   key={resource.id}
   resource={resource}
-  onSave={saveResource}
+onSave={openBoardSelector}
   isSaved={savedResources.some(
     (saved) => saved.id === resource.id
   )}
@@ -287,6 +360,42 @@ const interestsToRender = selectedInterests.length
     </section>
   );
 })}
+{showBoardSelector && (
+  <div className="board-selector">
+
+    <h3>Save to Board</h3>
+
+    {boards.map((board) => (
+  <button
+    key={board.id}
+    onClick={() => saveToBoard(board.id)}
+  >
+    {board.name}
+  </button>
+))}
+
+    <button onClick={() => setShowCreateBoard(true)}>
+  + Create New Board
+</button>
+{showCreateBoard && (
+  <div className="create-board-form">
+
+    <input
+      type="text"
+      placeholder="Enter board name"
+      value={newBoardName}
+      onChange={(e) => setNewBoardName(e.target.value)}
+    />
+
+    <button onClick={createBoard}>
+      Create
+    </button>
+
+  </div>
+)}
+  </div>  
+)}
+
 </main>
     </div>
   );
