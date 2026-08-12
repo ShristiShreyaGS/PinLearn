@@ -2,100 +2,35 @@ import "./Dashboard.css";
 import ResourceCard from "../../ResourceCard/ResourceCard";
 import { useLocation } from "react-router-dom";
 import { useState } from "react";
-import Boards from "../Boards/Boards";
 
-function Dashboard() {
-  const routerData=useLocation();
-  const selectedInterests=routerData.state?.selectedInterests||[];
+function Dashboard({ boards = [], setBoards = () => {} }) {
+  const routerData = useLocation();
+  const selectedInterests = routerData.state?.selectedInterests || [];
   const [savedResources, setSavedResources] = useState([]);
   const [showCreateBoard, setShowCreateBoard] = useState(false);
-const [newBoardName, setNewBoardName] = useState("");
-  const [boards, setBoards] = useState([
-  {
-    id: 1,
-    name: "React Learning",
-    resources: []
-  },
-  {
-    id: 2,
-    name: "AI Resources",
-    resources: []
-  },
-  {
-    id: 3,
-    name: "Interview Prep",
-    resources: []
-  }
-]);
-const openBoardSelector = (resource) => {
-  setResourceToSave(resource);
-  setShowBoardSelector(true);
-};
-const saveToBoard = (boardId) => {
+  const [newBoardName, setNewBoardName] = useState("");
+  const [showBoardSelector, setShowBoardSelector] = useState(false);
+  const [resourceToSave, setResourceToSave] = useState(null);
 
-  setBoards((previousBoards) => {
+  const createBoard = () => {
+    if (!newBoardName.trim()) {
+      return;
+    }
 
-    return previousBoards.map((board) => {
+    const newBoard = {
+      id: Date.now(),
+      name: newBoardName,
+      resources: resourceToSave ? [resourceToSave] : []
+    };
 
-      if (board.id === boardId) {
+    setBoards((previousBoards) => [...previousBoards, newBoard]);
 
-        return {
-          ...board,
-          resources: [
-            ...board.resources,
-            resourceToSave
-          ]
-        };
-
-      }
-
-      return board;
-    });
-
-  });
-
-  setShowBoardSelector(false);
-  setResourceToSave(null);
-};
-const createBoard = () => {
-  if (!newBoardName.trim()) {
-    return;
-  }
-
-  const newBoard = {
-    id: Date.now(),
-    name: newBoardName,
-    resources: resourceToSave ? [resourceToSave] : []
+    setNewBoardName("");
+    setShowCreateBoard(false);
+    setShowBoardSelector(false);
+    setResourceToSave(null);
   };
 
-  setBoards((previousBoards) => [
-    ...previousBoards,
-    newBoard
-  ]);
-
-  setNewBoardName("");
-  setShowCreateBoard(false);
-  setShowBoardSelector(false);
-  setResourceToSave(null);
-};
-const [showBoardSelector, setShowBoardSelector] = useState(false);
-const [resourceToSave, setResourceToSave] = useState(null);
-  const saveResource = (resource) => {
-
-  const alreadySaved = savedResources.some(
-    (saved) => saved.id === resource.id
-  );
-
-  if (alreadySaved) {
-    return;
-  }
-
-  setSavedResources((previousResources) => [
-    ...previousResources,
-    resource
-  ]);
-
-};
   const resources = [
   {
     id: 1,
@@ -180,26 +115,38 @@ const [resourceToSave, setResourceToSave] = useState(null);
     image: "https://placehold.co/600x400"
   }
 ];
-const interestsToRender = selectedInterests.length
-  ? selectedInterests
-  : [...new Set(resources.map((resource) => resource.topic))];
+  const interestsToRender = selectedInterests.length
+    ? selectedInterests
+    : [...new Set(resources.map((resource) => resource.topic))];
+
+  const openBoardSelector = (resource) => {
+    setResourceToSave(resource);
+    setShowBoardSelector(true);
+  };
+
+  const saveToBoard = (boardId) => {
+    if (!resourceToSave) {
+      return;
+    }
+
+    setBoards((previousBoards) =>
+      previousBoards.map((board) =>
+        board.id === boardId
+          ? {
+              ...board,
+              resources: [...board.resources, resourceToSave]
+            }
+          : board
+      )
+    );
+
+    setShowBoardSelector(false);
+    setResourceToSave(null);
+  };
+
   return (
     <div className="dashboard">
-
-      <header className="dashboard-header">
-        <h2>PinLearn</h2>
-
-        <nav>
-          <a href="/">Home</a>
-          <a href="/explore">Explore</a>
-          <a href="#boards">My Boards</a>
-        </nav>
-
-        <button>Profile</button>
-
-      </header>
-
-<main className="dashboard-content">
+      <main className="dashboard-content">
 
   <div className="welcome-section">
 
@@ -219,186 +166,176 @@ const interestsToRender = selectedInterests.length
   </div>
 
 
-  <div className="interest-pills">
+        <div className="interest-pills">
 
-    {selectedInterests.map((interest) => (
-      <span key={interest}>
-        {interest}
-      </span>
-    ))}
+          {selectedInterests.map((interest) => (
+            <span key={interest}>
+              {interest}
+            </span>
+          ))}
 
-  </div>
-  <div id="boards"><Boards boards={boards} /></div>
-  {/* resources below */}
-  {interestsToRender.map((interest) => {
+        </div>
+        {interestsToRender.map((interest) => {
 
-  const interestResources = resources.filter(
-    (resource) => resource.topic === interest
-  );
+          const interestResources = resources.filter(
+            (resource) => resource.topic === interest
+          );
 
-  const videos = interestResources.filter(
-    (resource) => resource.type === "Video"
-  );
+          const videos = interestResources.filter(
+            (resource) => resource.type === "Video"
+          );
 
-  const articles = interestResources.filter(
-    (resource) => resource.type === "Article"
-  );
+          const articles = interestResources.filter(
+            (resource) => resource.type === "Article"
+          );
 
-  const repositories = interestResources.filter(
-    (resource) => resource.type === "Repository"
-  );
+          const repositories = interestResources.filter(
+            (resource) => resource.type === "Repository"
+          );
 
-  const projects = interestResources.filter(
-    (resource) => resource.type === "Project"
-  );
+          const projects = interestResources.filter(
+            (resource) => resource.type === "Project"
+          );
+          return (
+            <section key={interest}>
 
+              <div className="section-heading">
+                <h2>{interest}</h2>
+                <button>See all</button>
+              </div>
 
-  return (
-    <section key={interest}>
+              {videos.length > 0 && (
+                <>
+                  <h3>Videos</h3>
 
-      <div className="section-heading">
-        <h2>{interest}</h2>
-        <button>See all</button>
-      </div>
+                  <div className="content-grid">
 
+                    {videos.map((resource) => (
+                      <ResourceCard
+                        key={resource.id}
+                        resource={resource}
+                        onSave={openBoardSelector}
+                        isSaved={savedResources.some(
+                          (saved) => saved.id === resource.id
+                        )}
+                      />
+                    ))}
 
-      {/* VIDEOS */}
+                  </div>
+                </>
+              )}
 
-      {videos.length > 0 && (
-        <>
-          <h3>Videos</h3>
+              {articles.length > 0 && (
+                <>
+                  <h3>Articles</h3>
 
-          <div className="content-grid">
+                  <div className="content-grid">
 
-            {videos.map((resource) => (
-              <ResourceCard
-  key={resource.id}
-  resource={resource}
- onSave={openBoardSelector}
-  isSaved={savedResources.some(
-    (saved) => saved.id === resource.id
-  )}
-/>
-            ))}
+                    {articles.map((resource) => (
+                      <ResourceCard
+                        key={resource.id}
+                        resource={resource}
+                        onSave={openBoardSelector}
+                        isSaved={savedResources.some(
+                          (saved) => saved.id === resource.id
+                        )}
+                      />
+                    ))}
 
+                  </div>
+                </>
+              )}
+
+              {repositories.length > 0 && (
+                <>
+                  <h3>Repositories</h3>
+
+                  <div className="content-grid">
+
+                    {repositories.map((resource) => (
+                      <ResourceCard
+                        key={resource.id}
+                        resource={resource}
+                        onSave={openBoardSelector}
+                        isSaved={savedResources.some(
+                          (saved) => saved.id === resource.id
+                        )}
+                      />
+                    ))}
+
+                  </div>
+                </>
+              )}
+
+              {projects.length > 0 && (
+                <>
+                  <h3>Projects</h3>
+
+                  <div className="content-grid">
+
+                    {projects.map((resource) => (
+                      <ResourceCard
+                        key={resource.id}
+                        resource={resource}
+                        onSave={openBoardSelector}
+                        isSaved={savedResources.some(
+                          (saved) => saved.id === resource.id
+                        )}
+                      />
+                    ))}
+
+                  </div>
+                </>
+              )}
+
+            </section>
+          );
+        })}
+
+        {showBoardSelector && (
+          <div className="board-selector">
+
+            <h3>Save to Board</h3>
+
+            {boards.length > 0 ? (
+              boards.map((board) => (
+                <button
+                  key={board.id}
+                  onClick={() => saveToBoard(board.id)}
+                >
+                  {board.name}
+                </button>
+              ))
+            ) : (
+              <p>No boards yet. Create one to save this resource.</p>
+            )}
+
+            <button onClick={() => setShowCreateBoard(true)}>
+              + Create New Board
+            </button>
+
+            {showCreateBoard && (
+              <div className="create-board-form">
+
+                <input
+                  type="text"
+                  placeholder="Enter board name"
+                  value={newBoardName}
+                  onChange={(e) => setNewBoardName(e.target.value)}
+                />
+
+                <button onClick={createBoard}>
+                  Create
+                </button>
+
+              </div>
+            )}
           </div>
-        </>
-      )}
+        )}
 
-
-      {/* ARTICLES */}
-
-      {articles.length > 0 && (
-        <>
-          <h3>Articles</h3>
-
-          <div className="content-grid">
-
-            {articles.map((resource) => (
-             <ResourceCard
-  key={resource.id}
-  resource={resource}
-  onSave={openBoardSelector}
-  isSaved={savedResources.some(
-    (saved) => saved.id === resource.id
-  )}
-/>
-            ))}
-
-          </div>
-        </>
-      )}
-
-
-      {/* REPOSITORIES */}
-
-      {repositories.length > 0 && (
-        <>
-          <h3>Repositories</h3>
-
-          <div className="content-grid">
-
-            {repositories.map((resource) => (
-              <ResourceCard
-  key={resource.id}
-  resource={resource}
-  onSave={openBoardSelector}
-  isSaved={savedResources.some(
-    (saved) => saved.id === resource.id
-  )}
-/>
-            ))}
-
-          </div>
-        </>
-      )}
-
-
-      {/* PROJECTS */}
-
-      {projects.length > 0 && (
-        <>
-          <h3>Projects</h3>
-
-          <div className="content-grid">
-
-            {projects.map((resource) => (
-              <ResourceCard
-  key={resource.id}
-  resource={resource}
-onSave={openBoardSelector}
-  isSaved={savedResources.some(
-    (saved) => saved.id === resource.id
-  )}
-/>
-            ))}
-
-          </div>
-        </>
-      )}
-
-    </section>
-  );
-})}
-{showBoardSelector && (
-  <div className="board-selector">
-
-    <h3>Save to Board</h3>
-
-    {boards.map((board) => (
-  <button
-    key={board.id}
-    onClick={() => saveToBoard(board.id)}
-  >
-    {board.name}
-  </button>
-))}
-
-    <button onClick={() => setShowCreateBoard(true)}>
-  + Create New Board
-</button>
-{showCreateBoard && (
-  <div className="create-board-form">
-
-    <input
-      type="text"
-      placeholder="Enter board name"
-      value={newBoardName}
-      onChange={(e) => setNewBoardName(e.target.value)}
-    />
-
-    <button onClick={createBoard}>
-      Create
-    </button>
-
-  </div>
-)}
-  </div>  
-)}
-
-</main>
+      </main>
     </div>
   );
-}
 
+}
 export default Dashboard;
