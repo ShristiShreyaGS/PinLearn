@@ -55,3 +55,23 @@
 .board-card:hover {
   transform: translateY(-2px);
 }
+.board-resources {
+  margin-top: 20px;
+}
+
+.saved-resource {
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 10px;
+  background: #f7f7f7;
+}
+
+.saved-resource h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.saved-resource p {
+  margin: 0;
+  font-size: 13px;
+}

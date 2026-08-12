@@ -267,3 +267,20 @@
   background: #fafafa;
   border: 1px solid #eeeeee;
 }
+
+.saved-message {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 1200;
+
+  padding: 10px 14px;
+  border-radius: 10px;
+
+  background: #111827;
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}

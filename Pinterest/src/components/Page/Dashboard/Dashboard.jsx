@@ -1,7 +1,7 @@
 import "./Dashboard.css";
 import ResourceCard from "../../ResourceCard/ResourceCard";
 import { useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function Dashboard({ boards = [], setBoards = () => {} }) {
   const routerData = useLocation();
@@ -11,6 +11,8 @@ function Dashboard({ boards = [], setBoards = () => {} }) {
   const [newBoardName, setNewBoardName] = useState("");
   const [showBoardSelector, setShowBoardSelector] = useState(false);
   const [resourceToSave, setResourceToSave] = useState(null);
+const [savedMessage,setSavedMessage]=useState("");
+const [videosByInterest, setVideosByInterest] = useState({});
 
   const createBoard = () => {
     if (!newBoardName.trim()) {
@@ -25,6 +27,14 @@ function Dashboard({ boards = [], setBoards = () => {} }) {
 
     setBoards((previousBoards) => [...previousBoards, newBoard]);
 
+    if (resourceToSave) {
+      setSavedResources((previousSaved) => [...previousSaved, resourceToSave]);
+      setSavedMessage(`Saved to "${newBoardName.trim()}"`);
+      setTimeout(() => {
+        setSavedMessage("");
+      }, 2500);
+    }
+
     setNewBoardName("");
     setShowCreateBoard(false);
     setShowBoardSelector(false);
@@ -32,92 +42,121 @@ function Dashboard({ boards = [], setBoards = () => {} }) {
   };
 
   const resources = [
-  {
-    id: 1,
-    topic: "React",
-    type: "Video",
-    title: "React Hooks Explained",
-    description: "Learn the basics of React Hooks.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 2,
-    topic: "React",
-    type: "Article",
-    title: "Understanding React Components",
-    description: "A beginner-friendly guide to React components.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 3,
-    topic: "React",
-    type: "Repository",
-    title: "React Projects",
-    description: "Explore projects built using React.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 4,
-    topic: "React",
-    type: "Project",
-    title: "React Dashboard",
-    description: "A dashboard project built with React.",
-    image: "https://placehold.co/600x400"
-  },
+    {
+      id: 1,
+      topic: "React",
+      type: "Video",
+      title: "React Hooks Explained",
+      description: "Learn the basics of React Hooks.",
+      image: "https://placehold.co/600x400"
+    },
+    {
+      id: 2,
+      topic: "React",
+      type: "Article",
+      title: "Understanding React Components",
+      description: "A beginner-friendly guide to React components.",
+      image: "https://placehold.co/600x400"
+    },
+    {
+      id: 3,
+      topic: "React",
+      type: "Repository",
+      title: "React Projects",
+      description: "Explore projects built using React.",
+      image: "https://placehold.co/600x400"
+    },
+    {
+      id: 4,
+      topic: "React",
+      type: "Project",
+      title: "React Dashboard",
+      description: "A dashboard project built with React.",
+      image: "https://placehold.co/600x400"
+    },
+    {
+      id: 5,
+      topic: "AI",
+      type: "Video",
+      title: "Introduction to AI",
+      description: "Understand the basics of Artificial Intelligence.",
+      image: "https://placehold.co/600x400"
+    },
+    {
+      id: 6,
+      topic: "AI",
+      type: "Article",
+      title: "How AI Works",
+      description: "An introduction to modern AI concepts.",
+      image: "https://placehold.co/600x400"
+    },
+    {
+      id: 7,
+      topic: "AI",
+      type: "Repository",
+      title: "Awesome AI Projects",
+      description: "Explore interesting AI projects.",
+      image: "https://placehold.co/600x400"
+    },
+    {
+      id: 8,
+      topic: "Playwright",
+      type: "Video",
+      title: "Playwright Basics",
+      description: "Get started with Playwright testing.",
+      image: "https://placehold.co/600x400"
+    },
+    {
+      id: 9,
+      topic: "Playwright",
+      type: "Article",
+      title: "Understanding Playwright Fixtures",
+      description: "Learn about reusable Playwright fixtures.",
+      image: "https://placehold.co/600x400"
+    },
+    {
+      id: 10,
+      topic: "Playwright",
+      type: "Repository",
+      title: "Playwright Examples",
+      description: "Explore Playwright automation examples.",
+      image: "https://placehold.co/600x400"
+    }
+  ];
 
-  {
-    id: 5,
-    topic: "AI",
-    type: "Video",
-    title: "Introduction to AI",
-    description: "Understand the basics of Artificial Intelligence.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 6,
-    topic: "AI",
-    type: "Article",
-    title: "How AI Works",
-    description: "An introduction to modern AI concepts.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 7,
-    topic: "AI",
-    type: "Repository",
-    title: "Awesome AI Projects",
-    description: "Explore interesting AI projects.",
-    image: "https://placehold.co/600x400"
-  },
-
-  {
-    id: 8,
-    topic: "Playwright",
-    type: "Video",
-    title: "Playwright Basics",
-    description: "Get started with Playwright testing.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 9,
-    topic: "Playwright",
-    type: "Article",
-    title: "Understanding Playwright Fixtures",
-    description: "Learn about reusable Playwright fixtures.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 10,
-    topic: "Playwright",
-    type: "Repository",
-    title: "Playwright Examples",
-    description: "Explore Playwright automation examples.",
-    image: "https://placehold.co/600x400"
-  }
-];
   const interestsToRender = selectedInterests.length
     ? selectedInterests
     : [...new Set(resources.map((resource) => resource.topic))];
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchVideosByInterest = async () => {
+      try {
+        const entries = await Promise.all(
+          interestsToRender.map(async (interest) => {
+            const response = await fetch(
+              `http://localhost:5000/api/youtube?topic=${encodeURIComponent(interest)}`
+            );
+            const data = await response.json();
+            return [interest, Array.isArray(data) ? data : []];
+          })
+        );
+
+        if (isMounted) {
+          setVideosByInterest(Object.fromEntries(entries));
+        }
+      } catch (error) {
+        console.error("Error fetching videos:", error);
+      }
+    };
+
+    fetchVideosByInterest();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [interestsToRender.join("|")]);
 
   const openBoardSelector = (resource) => {
     setResourceToSave(resource);
@@ -125,24 +164,55 @@ function Dashboard({ boards = [], setBoards = () => {} }) {
   };
 
   const saveToBoard = (boardId) => {
-    if (!resourceToSave) {
-      return;
-    }
+  const selectedBoard = boards.find(
+    (board) => board.id === boardId
+  );
 
-    setBoards((previousBoards) =>
-      previousBoards.map((board) =>
-        board.id === boardId
-          ? {
-              ...board,
-              resources: [...board.resources, resourceToSave]
-            }
-          : board
-      )
+  const alreadySaved = selectedBoard.resources.some(
+    (resource) => resource.id === resourceToSave.id
+  );
+
+  if (alreadySaved) {
+    setShowBoardSelector(false);
+
+    setSavedMessage(
+      `Already saved to "${selectedBoard.name}"`
     );
 
-    setShowBoardSelector(false);
-    setResourceToSave(null);
-  };
+    setTimeout(() => {
+      setSavedMessage("");
+    }, 2500);
+
+    return;
+  }
+
+  setBoards((previousBoards) => {
+    return previousBoards.map((board) => {
+      if (board.id === boardId) {
+        return {
+          ...board,
+          resources: [
+            ...board.resources,
+            resourceToSave
+          ]
+        };
+      }
+
+      return board;
+    });
+  });
+
+  setShowBoardSelector(false);
+  setResourceToSave(null);
+
+  setSavedMessage(
+    `Saved to "${selectedBoard.name}"`
+  );
+
+  setTimeout(() => {
+    setSavedMessage("");
+  }, 2500);
+};
 
   return (
     <div className="dashboard">
@@ -181,9 +251,7 @@ function Dashboard({ boards = [], setBoards = () => {} }) {
             (resource) => resource.topic === interest
           );
 
-          const videos = interestResources.filter(
-            (resource) => resource.type === "Video"
-          );
+          const interestVideos = videosByInterest[interest] || [];
 
           const articles = interestResources.filter(
             (resource) => resource.type === "Article"
@@ -204,19 +272,19 @@ function Dashboard({ boards = [], setBoards = () => {} }) {
                 <button>See all</button>
               </div>
 
-              {videos.length > 0 && (
+              {interestVideos.length > 0 && (
                 <>
                   <h3>Videos</h3>
 
                   <div className="content-grid">
 
-                    {videos.map((resource) => (
+                    {interestVideos.map((video) => (
                       <ResourceCard
-                        key={resource.id}
-                        resource={resource}
+                        key={video.id}
+                        resource={video}
                         onSave={openBoardSelector}
                         isSaved={savedResources.some(
-                          (saved) => saved.id === resource.id
+                          (saved) => saved.id === video.id
                         )}
                       />
                     ))}
@@ -296,7 +364,29 @@ function Dashboard({ boards = [], setBoards = () => {} }) {
           <div className="board-selector">
 
             <h3>Save to Board</h3>
-
+            <button
+            className="close-button"
+            onClick={()=>setShowBoardSelector(false)}
+  style={{
+    position: "absolute",
+    top: "16px",
+    right: "16px",
+    border: "none",
+    background: "transparent",
+    fontSize: "24px",
+    fontWeight: "600",
+    cursor: "pointer",
+    color: "#555",
+    width: "36px",
+    height: "36px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  }}
+>
+  ×
+</button>
             {boards.length > 0 ? (
               boards.map((board) => (
                 <button
@@ -305,6 +395,7 @@ function Dashboard({ boards = [], setBoards = () => {} }) {
                 >
                   {board.name}
                 </button>
+
               ))
             ) : (
               <p>No boards yet. Create one to save this resource.</p>
@@ -329,9 +420,16 @@ function Dashboard({ boards = [], setBoards = () => {} }) {
                 </button>
 
               </div>
+              
             )}
           </div>
+          
         )}
+        {savedMessage && (
+  <div className="saved-message">
+    ✓ {savedMessage}
+  </div>
+)}
 
       </main>
     </div>

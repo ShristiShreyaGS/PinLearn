@@ -1,13 +1,15 @@
 import "./ResourceCard.css";
 
 function ResourceCard({ resource,onSave,isSaved }) {
+  const imageSrc = resource.thumbnail || resource.image;
+  const meta = resource.channel || resource.source;
 
   return (
     <div className="resource-card">
 
       <div className="resource-image">
         <img
-          src={resource.image}
+          src={imageSrc}
           alt={resource.title}
         />
       </div>
@@ -22,10 +24,20 @@ function ResourceCard({ resource,onSave,isSaved }) {
 
         <p>{resource.description}</p>
 
+        {meta && <p>{meta}</p>}
+
         <div className="resource-actions">
-          <button>View</button>
           <button
-  onClick={() => onSave(resource)}
+            onClick={() => {
+              if (resource.url) {
+                window.open(resource.url, "_blank", "noopener,noreferrer");
+              }
+            }}
+          >
+            View
+          </button>
+          <button
+  onClick={() => onSave && onSave(resource)}
   disabled={isSaved}
 >
   {isSaved ? "Saved ✓" : "Save"}
