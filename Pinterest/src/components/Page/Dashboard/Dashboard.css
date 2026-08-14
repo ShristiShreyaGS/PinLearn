@@ -1,6 +1,6 @@
 .dashboard {
   min-height: 100vh;
-  background: #f7f8fa;
+  background: #f8fafc;
   color: #1f2937;
 }
 
@@ -72,9 +72,9 @@
 
 .dashboard-content {
   max-width: 1180px;
-  margin: auto;
+  margin: 0 auto;
 
-  padding: 34px 32px 18px;
+  padding: 34px clamp(16px, 4vw, 32px) 24px;
 }
 
 
@@ -104,17 +104,14 @@
   grid-template-columns: repeat(3, 1fr);
 
   gap: 18px;
-
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0 32px 36px;
+  margin-top: 12px;
 }
 
 
 /* SECTION */
 
 .dashboard-content section {
-  margin-top: 48px;
+  margin-top: 42px;
 }
 
 .dashboard-content section h2 {
@@ -155,7 +152,7 @@
 }
 
 .interest-pills span {
-  padding: 5px 12px;
+  padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid #d1d5db;
   background: #ffffff;
@@ -207,7 +204,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 15px;
+  margin-bottom: 2px;
 }
 
 .section-heading h2 {
@@ -219,27 +216,36 @@
   background: transparent;
   cursor: pointer;
   font-weight: 600;
+  color: #475569;
 }
+
+.section-heading button:hover {
+  color: #0f172a;
+}
+
 .board-selector {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
 
-  width: 350px;
-  padding: 25px;
+  width: min(420px, calc(100vw - 24px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 24px;
 
   background: white;
-  border-radius: 16px;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
 
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 16px 42px rgba(15, 23, 42, 0.2);
 
   z-index: 1000;
 }
 
 .board-selector h3 {
   margin-top: 0;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .board-selector button {
@@ -250,15 +256,41 @@
   margin: 8px 0;
 
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
 
-  background: #f1f1f1;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 600;
 
   cursor: pointer;
 }
 
 .board-selector button:hover {
-  background: #e5e5e5;
+  background: #e2e8f0;
+}
+
+.board-selector .close-button {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  border: none;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.board-selector .close-button:hover {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 .boards-section {
   margin: 60px 0;
@@ -270,8 +302,8 @@
 
 .saved-message {
   position: fixed;
-  top: 18px;
-  right: 18px;
+  top: 16px;
+  right: 16px;
   z-index: 1200;
 
   padding: 10px 14px;
@@ -283,4 +315,16 @@
   font-size: 14px;
   font-weight: 600;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .dashboard-content section {
+    margin-top: 34px;
+  }
+
+  .saved-message {
+    right: 12px;
+    left: 12px;
+    text-align: center;
+  }
 }

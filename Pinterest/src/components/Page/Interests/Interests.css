@@ -5,25 +5,28 @@
   align-items: center;
   justify-content: center;
 
-  padding: 40px;
-  background: #f7f7f7;
+  padding: 40px 16px;
+  background: #f8fafc;
+  text-align: center;
 }
 
 .interests-page h1 {
-  margin-bottom: 10px;
-  font-size: 36px;
+  margin: 0 0 10px;
+  font-size: clamp(30px, 4.6vw, 40px);
+  letter-spacing: -0.7px;
 }
 
 .interests-page > p {
-  color: #666;
-  margin-bottom: 30px;
+  color: #64748b;
+  margin: 0;
 }
 
 .interest-grid {
-  width: 600px;
+  width: min(100%, 760px);
+  margin-top: 28px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
+  gap: 14px;
 }
 
 .interest-grid button {
@@ -61,28 +64,54 @@
   border-color: #111;
 }
 .interest-card {
-  padding: 20px;
+  padding: 18px;
   background: white;
   color: #222;
 
-  border: 2px solid #e0e0e0;
-  border-radius: 18px;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
 
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
 
   cursor: pointer;
   transition: 0.2s ease;
 }
-.interest-card.selected {
-  background: #222;
-  color: white;
-  border-color: #222;
+
+.interest-card:hover {
+  border-color: #94a3b8;
+  transform: translateY(-1px);
 }
+
+.interest-card.selected {
+  background: #0f172a;
+  color: white;
+  border-color: #0f172a;
+}
+
+.interests-page > p + p {
+  margin-top: 14px;
+  color: #334155;
+  font-weight: 600;
+}
+
 .continue-button:disabled {
   background: #d3d3d3;
   color: #888;
   cursor: not-allowed;
+}
+
+.continue-button {
+  margin-top: 24px;
+  min-width: 180px;
+  padding: 13px 32px;
+  border-radius: 999px;
+  background: #0f172a;
+  font-weight: 700;
+}
+
+.continue-button:not(:disabled):hover {
+  background: #1e293b;
 }
 .interest-pills {
   display: flex;
@@ -101,4 +130,21 @@
 
   font-size: 13px;
   font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .interest-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .interest-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .continue-button {
+    width: 100%;
+    max-width: 360px;
+  }
 }

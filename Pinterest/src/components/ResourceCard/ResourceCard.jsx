@@ -3,6 +3,8 @@ import "./ResourceCard.css";
 function ResourceCard({ resource,onSave,isSaved }) {
   const imageSrc = resource.thumbnail || resource.image;
   const meta = resource.channel || resource.source;
+  const fallbackQuery = encodeURIComponent(resource.title || resource.topic || "resource");
+  const viewUrl = resource.url || `https://www.google.com/search?q=${fallbackQuery}`;
 
   return (
     <div className="resource-card">
@@ -29,9 +31,7 @@ function ResourceCard({ resource,onSave,isSaved }) {
         <div className="resource-actions">
           <button
             onClick={() => {
-              if (resource.url) {
-                window.open(resource.url, "_blank", "noopener,noreferrer");
-              }
+              window.open(viewUrl, "_blank", "noopener,noreferrer");
             }}
           >
             View

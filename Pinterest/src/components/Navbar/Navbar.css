@@ -1,23 +1,24 @@
 .navbar {
-  min-height: 70px;
+  min-height: 72px;
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 24px;
+  gap: 18px;
+  padding: 14px clamp(16px, 4vw, 36px);
   box-sizing: border-box;
-  background: #ffffff;
-  border-bottom: 1px solid #e9ecef;
+  background: #ffffffcc;
+  border-bottom: 1px solid #e2e8f0;
+  backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
   z-index: 20;
 }
 
 .logo {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
-  color: #111827;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #0f172a;
   white-space: nowrap;
 }
 
@@ -30,29 +31,35 @@
 
 .nav-links a {
   text-decoration: none;
-  color: #4b5563;
+  color: #475569;
   font-size: 14px;
   font-weight: 600;
   transition: color 0.2s ease;
 }
 
 .nav-links a:hover {
-  color: #111827;
+  color: #0f172a;
 }
 
 .search-box {
   flex: 1;
-  min-width: 180px;
+  min-width: 200px;
 }
 
 .search-box input {
   width: 100%;
-  padding: 10px 14px;
+  height: 42px;
+  padding: 0 14px;
   border: 1px solid #d1d5db;
-  border-radius: 10px;
-  background: #f9fafb;
+  border-radius: 12px;
+  background: #f8fafc;
   font-size: 14px;
   box-sizing: border-box;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #94a3b8;
 }
 
 .profile {
@@ -69,7 +76,7 @@
 @media (max-width: 900px) {
   .navbar {
     flex-wrap: wrap;
-    row-gap: 10px;
+    row-gap: 12px;
     padding: 12px 16px;
   }
 

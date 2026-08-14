@@ -10,6 +10,7 @@ function Navbar() {
         <Link to="/dashboard">Home</Link>
         <Link to="/dashboard">Explore</Link>
         <Link to="/boards">My Boards</Link>
+        <Link to="/kanban">Kanban</Link>
       </div>
 
       <div className="search-box">
