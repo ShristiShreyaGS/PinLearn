@@ -1,0 +1,322 @@
+/* =========================
+   PROFILE PAGE
+========================= */
+.profile-page {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 24px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #0f172a;
+}
+
+/* =========================
+   HEADER
+========================= */
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.profile-page h1 {
+  margin: 0;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #0b1736;
+  letter-spacing: -0.5px;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+.profile-edit-button,
+.profile-save-button,
+.profile-cancel-button {
+  border: none;
+  border-radius: 50px;
+  padding: 12px 22px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.profile-edit-button,
+.profile-save-button {
+  background: linear-gradient(135deg, #0b1736, #1e3a8a);
+  color: #fff;
+  box-shadow: 0 6px 15px rgba(11, 23, 54, 0.2);
+}
+
+.profile-edit-button:hover,
+.profile-save-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(11, 23, 54, 0.25);
+}
+
+.profile-save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.profile-cancel-button {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.profile-cancel-button:hover {
+  background: #e2e8f0;
+}
+
+/* =========================
+   SUCCESS MESSAGE
+========================= */
+.profile-save-message {
+  margin: -10px 0 24px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  font-weight: 600;
+}
+
+/* =========================
+   PROFILE CARDS
+========================= */
+.profile-section {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.06),
+    0 12px 30px rgba(15, 23, 42, 0.08);
+  transition: all 0.3s ease;
+}
+
+.profile-section:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 16px rgba(15, 23, 42, 0.08),
+    0 18px 40px rgba(15, 23, 42, 0.12);
+}
+
+.profile-section h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  color: #0b1736;
+  font-size: 1.3rem;
+  font-weight: 700;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.profile-section p {
+  margin: 12px 0;
+  color: #475569;
+  line-height: 1.7;
+}
+
+.profile-section strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* =========================
+   FORM
+========================= */
+.profile-form label {
+  display: block;
+  margin-bottom: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.profile-form input,
+.profile-form textarea {
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px 15px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  outline: none;
+  font: inherit;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+.profile-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.profile-form input:focus,
+.profile-form textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.profile-form input[readonly] {
+  background: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+/* =========================
+   FORM ACTIONS
+========================= */
+.profile-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* =========================
+   INTEREST OPTIONS
+========================= */
+.profile-interest-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.interest-option {
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.interest-option:hover {
+  border-color: #0b1736;
+  color: #0b1736;
+}
+
+.interest-option.selected {
+  background: linear-gradient(135deg, #0b1736, #1e3a8a);
+  border-color: transparent;
+  color: #fff;
+}
+
+/* =========================
+   INTEREST TAGS
+========================= */
+.interests-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.interest-tag {
+  background: linear-gradient(135deg, #0b1736, #1e3a8a);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  box-shadow: 0 4px 10px rgba(11, 23, 54, 0.15);
+  transition: all 0.25s ease;
+}
+
+.interest-tag:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(11, 23, 54, 0.25);
+}
+
+/* =========================
+   LOADING / ERROR STATES
+========================= */
+.profile-page-loading,
+.profile-page-error,
+.profile-page-empty {
+  text-align: center;
+  margin-top: 120px;
+  font-size: 1.1rem;
+  color: #64748b;
+}
+
+/* =========================
+   ANIMATIONS
+========================= */
+.profile-section {
+  animation: fadeUp 0.4s ease;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 16px;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .profile-page h1 {
+    font-size: 2rem;
+  }
+
+  .profile-section {
+    padding: 22px;
+  }
+
+  .profile-section h2 {
+    font-size: 1.15rem;
+  }
+
+  .profile-form-actions {
+    flex-direction: column;
+  }
+
+  .profile-form-actions button {
+    width: 100%;
+  }
+
+  .interest-tag,
+  .interest-option {
+    font-size: 0.88rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-page h1 {
+    font-size: 1.7rem;
+  }
+
+  .profile-section {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .profile-edit-button,
+  .profile-save-button,
+  .profile-cancel-button {
+    width: 100%;
+  }
+}

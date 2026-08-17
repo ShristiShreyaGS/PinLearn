@@ -1,12 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
+import { clearSession } from "../../api/user";
 
 function Navbar() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    clearSession();
     navigate("/");
   };
 
@@ -16,14 +16,14 @@ function Navbar() {
 
       <div className="nav-links">
         <Link to="/dashboard">Home</Link>
-        <Link to="/dashboard">Explore</Link>
         <Link to="/boards">My Boards</Link>
         <Link to="/kanban">Kanban</Link>
+        <Link to="/profile">Profile</Link>
       </div>
 
-      <div className="search-box">
+      {/* <div className="search-box">
         <input type="text" placeholder="Search..." />
-      </div>
+      </div> */}
 
       <button className="profile" onClick={handleLogout}>Log out</button>
     </nav>

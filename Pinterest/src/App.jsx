@@ -1,57 +1,23 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect, useState } from "react";
 import Auth from "./components/Page/Auth/Auth";
 import Interests from "./components/Page/Interests/Interests";
 import Dashboard from "./components/Page/Dashboard/Dashboard";
 import Boards from "./components/Page/Boards/Boards";
 import Kanban from "./components/Page/Kanban/Kanban";
 import Navbar from "./components/Navbar/Navbar";
-
-const DEFAULT_BOARDS = [
-  {
-    id: 1,
-    name: "React Learning",
-    resources: []
-  },
-  {
-    id: 2,
-    name: "AI Resources",
-    resources: []
-  },
-  {
-    id: 3,
-    name: "Interview Prep",
-    resources: []
-  }
-];
-
-function readBoards() {
-  try {
-    const stored = localStorage.getItem("pinlearn_boards_v1");
-    if (!stored) {
-      return DEFAULT_BOARDS;
-    }
-
-    const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed)) {
-      return DEFAULT_BOARDS;
-    }
-
-    return parsed.map((board) => ({
-      ...board,
-      resources: Array.isArray(board.resources) ? board.resources : []
-    }));
-  } catch {
-    return DEFAULT_BOARDS;
-  }
-}
+import useBoards from "./hooks/useBoards";
+import Profile from "./components/Page/Profile/Profile";
 
 function App() {
-  const [boards, setBoards] = useState(readBoards);
-
-  useEffect(() => {
-    localStorage.setItem("pinlearn_boards_v1", JSON.stringify(boards));
-  }, [boards]);
+  const {
+    boards,
+    loading: boardsLoading,
+    error: boardsError,
+    refreshBoards,
+    createBoard,
+    saveResourceToBoard,
+    deleteBoard
+  } = useBoards();
 
   return (
     <BrowserRouter>
@@ -59,11 +25,25 @@ function App() {
         <Route path="/" element={<Auth />} />
         <Route path="/interests" element={<Interests />} />
         <Route
+          path="/profile"
+          element={
+            <>
+              <Navbar />
+              <Profile />
+            </>
+          }
+        />
+        <Route
           path="/dashboard"
           element={
             <>
               <Navbar />
-              <Dashboard boards={boards} setBoards={setBoards} />
+              <Dashboard
+                boards={boards}
+                createBoard={createBoard}
+                saveResourceToBoard={saveResourceToBoard}
+                refreshBoards={refreshBoards}
+              />
             </>
           }
         />
@@ -72,7 +52,14 @@ function App() {
           element={
             <>
               <Navbar />
-              <Boards boards={boards} />
+              <Boards
+                boards={boards}
+                loading={boardsLoading}
+                error={boardsError}
+                createBoard={createBoard}
+                deleteBoard={deleteBoard}
+                refreshBoards={refreshBoards}
+              />
             </>
           }
         />

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./Auth.css";
 import { useNavigate } from "react-router-dom";
+import { login, storeSession } from "../../../api/user";
 
 function Auth() {
   const navigate = useNavigate();
@@ -97,31 +98,12 @@ function Auth() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email: safeEmail,
-          password
-        })
+      const data = await login({
+        email: safeEmail,
+        password
       });
 
-      const contentType = response.headers.get("content-type") || "";
-      const data = contentType.includes("application/json")
-        ? await response.json()
-        : null;
-
-      if (!response.ok) {
-        alert(data?.message || "Login failed");
-        return;
-      }
-
-      localStorage.setItem("token", data.token);
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
+      storeSession(data);
 
       navigate("/dashboard", {
         state: {
@@ -130,7 +112,7 @@ function Auth() {
       });
     } catch (error) {
       console.error("Login request failed:", error);
-      alert("Login failed. Please try again.");
+      alert(error.message || "Login failed. Please try again.");
     }
   };
 

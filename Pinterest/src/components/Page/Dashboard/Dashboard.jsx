@@ -2,6 +2,7 @@ import "./Dashboard.css";
 import ResourceCard from "../../ResourceCard/ResourceCard";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
+import { fetchRepositories, fetchVideos } from "../../../api/content";
 const VIDEO_CACHE_KEY = "pinlearn_video_cache_v1";
 const VIDEO_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 function readVideoCache() {
@@ -126,7 +127,12 @@ const RESOURCES = [];
 //   }
 // ];
 
-function Dashboard({ boards = [], setBoards = () => {} }) {
+function Dashboard({
+  boards = [],
+  createBoard = async () => {},
+  saveResourceToBoard = async () => {},
+  refreshBoards
+}) {
   const routerData = useLocation();
   const selectedInterests = useMemo(() => {
     return routerData.state?.selectedInterests ?? [];
@@ -137,6 +143,7 @@ function Dashboard({ boards = [], setBoards = () => {} }) {
   const [showBoardSelector, setShowBoardSelector] = useState(false);
   const [resourceToSave, setResourceToSave] = useState(null);
 const [savedMessage,setSavedMessage]=useState("");
+const [boardError, setBoardError] = useState("");
 const [videosByInterest, setVideosByInterest] = useState({});
 const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
 
@@ -157,7 +164,20 @@ const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
     setSavedResources(deduped);
   }, [boards]);
 
-  const createBoard = () => {
+  useEffect(() => {
+    if (refreshBoards) {
+      refreshBoards();
+    }
+  }, [refreshBoards]);
+
+  const showSavedMessage = (message) => {
+    setSavedMessage(message);
+    setTimeout(() => {
+      setSavedMessage("");
+    }, 2500);
+  };
+
+  const createBoardAndSave = async () => {
     const trimmedBoardName = newBoardName.trim();
     if (!trimmedBoardName) {
       return;
@@ -168,36 +188,28 @@ const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
     );
 
     if (existingBoard) {
-      saveToBoard(existingBoard.id);
+      await saveToBoard(existingBoard._id);
+      setNewBoardName("");
+      setShowCreateBoard(false);
       return;
     }
 
-    const newBoard = {
-      id: Date.now(),
-      name: trimmedBoardName,
-      resources: resourceToSave ? [resourceToSave] : []
-    };
+    try {
+      setBoardError("");
+      const newBoard = await createBoard(trimmedBoardName);
 
-    setBoards((previousBoards) => [...previousBoards, newBoard]);
+      if (resourceToSave) {
+        await saveResourceToBoard(newBoard._id, resourceToSave);
+        showSavedMessage(`Saved to "${trimmedBoardName}"`);
+      }
 
-    if (resourceToSave) {
-      setSavedResources((previousSaved) => {
-        const keyToSave = resourceKey(resourceToSave);
-        if (previousSaved.some((resource) => resourceKey(resource) === keyToSave)) {
-          return previousSaved;
-        }
-        return [...previousSaved, resourceToSave];
-      });
-      setSavedMessage(`Saved to "${trimmedBoardName}"`);
-      setTimeout(() => {
-        setSavedMessage("");
-      }, 2500);
+      setNewBoardName("");
+      setShowCreateBoard(false);
+      setShowBoardSelector(false);
+      setResourceToSave(null);
+    } catch (error) {
+      setBoardError(error.message);
     }
-
-    setNewBoardName("");
-    setShowCreateBoard(false);
-    setShowBoardSelector(false);
-    setResourceToSave(null);
   };
 
   const interestsToRender = useMemo(() => {
@@ -241,11 +253,8 @@ const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
 
         const entries = await Promise.all(
           interestsToFetch.map(async (interest) => {
-            const response = await fetch(
-              `http://localhost:5000/api/youtube?topic=${encodeURIComponent(interest)}`
-            );
-            const data = await response.json();
-            return [interest, Array.isArray(data) ? data : []];
+            const videos = await fetchVideos(interest);
+            return [interest, videos];
           })
         );
 
@@ -284,28 +293,7 @@ const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
       try {
         const entries = await Promise.all(
           interestsToRender.map(async (interest) => {
-            const response = await fetch(
-              `http://localhost:5000/api/github?topic=${encodeURIComponent(interest)}`
-            );
-
-            if (!response.ok) {
-              throw new Error(`GitHub request failed: ${response.status}`);
-            }
-
-            const data = await response.json();
-            const repositories = Array.isArray(data.items)
-              ? data.items.map((repository) => ({
-                  id: `github-${repository.id}`,
-                  topic: interest,
-                  type: "Repository",
-                  title: repository.full_name,
-                  description: repository.description || "No description provided.",
-                  image: repository.owner?.avatar_url || "https://placehold.co/600x400",
-                  url: repository.html_url,
-                  source: `GitHub | ${repository.stargazers_count.toLocaleString()} stars`
-                }))
-              : [];
-
+            const repositories = await fetchRepositories(interest);
             return [interest, repositories];
           })
         );
@@ -329,70 +317,42 @@ const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
     setResourceToSave(resource);
     setShowCreateBoard(false);
     setNewBoardName("");
+    setBoardError("");
     setShowBoardSelector(true);
   };
 
-  const saveToBoard = (boardId) => {
+  const saveToBoard = async (boardId) => {
   const selectedBoard = boards.find(
-    (board) => board.id === boardId
+    (board) => board._id === boardId
   );
 
   if (!selectedBoard || !resourceToSave) {
     return;
   }
 
-  const alreadySaved = selectedBoard.resources.some(
-    (resource) => resource.id === resourceToSave.id
+  const keyToSave = resourceKey(resourceToSave);
+
+  const alreadySaved = (selectedBoard.resources || []).some(
+    (resource) => resourceKey(resource) === keyToSave
   );
 
   if (alreadySaved) {
     setShowBoardSelector(false);
-
-    setSavedMessage(
-      `Already saved to "${selectedBoard.name}"`
-    );
-
-    setTimeout(() => {
-      setSavedMessage("");
-    }, 2500);
-
+    setResourceToSave(null);
+    showSavedMessage(`Already saved to "${selectedBoard.name}"`);
     return;
   }
 
-  setBoards((previousBoards) => {
-    return previousBoards.map((board) => {
-      if (board.id === boardId) {
-        return {
-          ...board,
-          resources: [
-            ...board.resources,
-            resourceToSave
-          ]
-        };
-      }
+  try {
+    setBoardError("");
+    await saveResourceToBoard(boardId, resourceToSave);
 
-      return board;
-    });
-  });
-
-  setShowBoardSelector(false);
-  setResourceToSave(null);
-
-  setSavedResources((previousSaved) => {
-    const keyToSave = resourceKey(resourceToSave);
-    if (previousSaved.some((resource) => resourceKey(resource) === keyToSave)) {
-      return previousSaved;
-    }
-    return [...previousSaved, resourceToSave];
-  });
-
-  setSavedMessage(
-    `Saved to "${selectedBoard.name}"`
-  );
-
-  setTimeout(() => {
-    setSavedMessage("");
-  }, 2500);
+    setShowBoardSelector(false);
+    setResourceToSave(null);
+    showSavedMessage(`Saved to "${selectedBoard.name}"`);
+  } catch (error) {
+    setBoardError(error.message);
+  }
 };
 
   return (
@@ -556,8 +516,8 @@ const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
             {boards.length > 0 ? (
               boards.map((board) => (
                 <button
-                  key={board.id}
-                  onClick={() => saveToBoard(board.id)}
+                  key={board._id}
+                  onClick={() => saveToBoard(board._id)}
                 >
                   {board.name}
                 </button>
@@ -571,6 +531,10 @@ const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
               + Create New Board
             </button>
 
+            {boardError && (
+              <p className="board-error">{boardError}</p>
+            )}
+
             {showCreateBoard && (
               <div className="create-board-form">
 
@@ -578,10 +542,16 @@ const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
                   type="text"
                   placeholder="Enter board name"
                   value={newBoardName}
+                  autoFocus
                   onChange={(e) => setNewBoardName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      createBoardAndSave();
+                    }
+                  }}
                 />
 
-                <button onClick={createBoard}>
+                <button onClick={createBoardAndSave}>
                   Create
                 </button>
 

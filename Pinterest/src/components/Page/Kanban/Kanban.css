@@ -1,176 +1,294 @@
+/* =========================
+   PAGE
+========================= */
+
 .kanban-page {
   min-height: 100vh;
-  background: #ececec;
-  padding: 20px;
-  font-family: "Comic Sans MS", cursive, sans-serif;
+  background: #f1f1f1;
+  padding: 24px;
+  font-family: "Trebuchet MS", "Comic Sans MS", sans-serif;
 }
 
-.board-title {
-  text-align: center;
-  font-size: 3rem;
-  margin-bottom: 30px;
-  color: #111;
-  border-bottom: 4px solid #67c23a;
-  display: inline-block;
-  padding-bottom: 10px;
-}
+/* =========================
+   TITLE
+========================= */
 
 .kanban-page h1 {
   text-align: center;
 }
 
+.board-title {
+  text-align: center;
+  font-size: 3rem;
+  color: #222;
+  margin-bottom: 30px;
+  display: inline-block;
+  border-bottom: 4px solid #67c23a;
+  padding-bottom: 10px;
+  letter-spacing: -1px;
+}
+
+/* =========================
+   BOARD
+========================= */
+
 .kanban-board {
   display: flex;
   justify-content: center;
   gap: 0;
-  width: min(100%, 860px);
+  width: min(100%, 900px);
   margin: 0 auto;
-  background: white;
-  border: 6px solid #888;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+
+  background: #ffffff;
+  border: 5px solid #9a9a9a;
+  border-radius: 18px;
+
   overflow: hidden;
+
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.15),
+    0 4px 8px rgba(0, 0, 0, 0.08);
 }
+
+/* =========================
+   COLUMN
+========================= */
 
 .kanban-column {
   flex: 1;
   min-width: 0;
-  background: white;
-  border-right: 3px solid #8c8c8c;
-  padding: 14px;
-  border-radius: 0;
-  box-shadow: none;
+
+  background: #fff;
+  border-right: 3px solid #b5b5b5;
+
+  padding: 16px;
 }
 
 .kanban-column:last-child {
   border-right: none;
 }
 
+/* =========================
+   COLUMN HEADER
+========================= */
+
 .kanban-column-header {
+  display: flex;
   justify-content: center;
-  margin-bottom: 12px;
+  align-items: center;
+  margin-bottom: 14px;
 }
 
 .kanban-column-header h2 {
-  font-size: 1.35rem;
+  margin: 0;
   color: #666;
-  font-family: "Comic Sans MS", cursive;
+  font-size: 1.4rem;
+  font-weight: 700;
 }
 
 .card-count {
   display: none;
 }
 
+/* =========================
+   CARDS CONTAINER
+========================= */
+
 .kanban-cards {
-  min-height: 300px;
+  min-height: 320px;
+
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
+
   gap: 12px;
-  padding: 6px;
+
+  padding: 8px;
+  border-radius: 8px;
+
+  transition: background 0.2s ease;
 }
 
 .kanban-cards.dragging-over {
-  background: #f7f7f7;
+  background: #fafafa;
 }
+
+/* =========================
+   STICKY NOTES
+========================= */
 
 .kanban-card {
-  width: 92px;
-  min-height: 82px;
+  width: 100px;
+  min-height: 90px;
+
+  padding: 12px;
+
   border: none;
-  border-radius: 2px;
-  padding: 10px;
+  border-radius: 3px;
+
   position: relative;
+
   display: flex;
   justify-content: space-between;
+
   cursor: grab;
-  transform: rotate(-3deg);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.22);
+
   transition: all 0.2s ease;
+
+  box-shadow:
+    0 8px 15px rgba(0, 0, 0, 0.22),
+    0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
+/* Sticky note fold effect */
+.kanban-card::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+
+  width: 18px;
+  height: 18px;
+
+  background: rgba(0, 0, 0, 0.08);
+
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
+}
+
+/* Better note colors */
+
 .kanban-card:nth-child(4n + 1) {
-  background: #ff69b4;
+  background: #ff89c7;
+  transform: rotate(-3deg);
 }
 
 .kanban-card:nth-child(4n + 2) {
-  background: #40c4ff;
+  background: #7ddcff;
+  transform: rotate(2deg);
 }
 
 .kanban-card:nth-child(4n + 3) {
-  background: #c5e04b;
+  background: #d7f15c;
+  transform: rotate(-2deg);
 }
 
 .kanban-card:nth-child(4n + 4) {
-  background: #ffb02e;
+  background: #ffc65a;
+  transform: rotate(3deg);
 }
 
 .kanban-card:hover {
-  transform: rotate(0deg) scale(1.05);
+  transform: rotate(0deg) scale(1.08);
+  z-index: 50;
 }
 
 .kanban-card.dragging {
-  transform: rotate(0deg) scale(1.1);
+  transform: rotate(0deg) scale(1.12);
+
+  box-shadow:
+    0 18px 30px rgba(0, 0, 0, 0.28);
+
   z-index: 999;
 }
 
+/* =========================
+   CARD TEXT
+========================= */
+
 .kanban-card p {
-  font-size: 0.85rem;
-  color: #222;
-  word-break: break-word;
-  line-height: 1.3;
   margin: 0;
+
+  font-size: 0.85rem;
+  line-height: 1.3;
+
+  color: #222;
+
   font-weight: 600;
+
+  word-break: break-word;
 }
+
+/* =========================
+   DELETE BUTTON
+========================= */
 
 .delete-card {
   position: absolute;
   top: 4px;
   right: 6px;
-  background: transparent;
+
   border: none;
-  cursor: pointer;
+  background: transparent;
+
+  color: rgba(0, 0, 0, 0.6);
+
   font-size: 1rem;
-  color: rgba(0, 0, 0, 0.65);
+
+  cursor: pointer;
+
+  transition: color 0.2s ease;
 }
 
 .delete-card:hover {
-  color: red;
+  color: #ff0000;
 }
 
+/* =========================
+   ADD CARD FORM
+========================= */
+
 .add-card-form {
-  margin-top: 10px;
+  margin-top: 12px;
+
   display: flex;
   gap: 10px;
 }
 
 .add-card-form input {
   flex: 1;
-  border: 2px solid #bdbdbd;
-  border-radius: 8px;
-  padding: 8px;
-  font-size: 0.85rem;
+
+  padding: 10px 12px;
+
+  border: 2px solid #cfcfcf;
+  border-radius: 10px;
+
   background: #fafafa;
+
+  font-size: 0.9rem;
 }
 
 .add-card-form input:focus {
   outline: none;
   border-color: #67c23a;
+  background: white;
 }
 
 .add-card-form button {
-  background: #67c23a;
   border: none;
+
+  background: #67c23a;
   color: white;
-  padding: 8px 14px;
-  border-radius: 8px;
+
+  padding: 10px 16px;
+
+  border-radius: 10px;
+
+  font-size: 1rem;
+  font-weight: bold;
+
   cursor: pointer;
-  font-size: 1.1rem;
+
+  transition: all 0.2s ease;
 }
 
 .add-card-form button:hover {
-  background: #4fa11e;
+  background: #55ac27;
+  transform: scale(1.05);
 }
+
+/* =========================
+   RESPONSIVE
+========================= */
 
 @media (max-width: 900px) {
   .kanban-board {
@@ -179,10 +297,33 @@
 
   .kanban-column {
     border-right: none;
-    border-bottom: 3px solid #8c8c8c;
+    border-bottom: 3px solid #b5b5b5;
   }
 
   .kanban-column:last-child {
     border-bottom: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .kanban-page {
+    padding: 16px;
+  }
+
+  .board-title {
+    font-size: 2.2rem;
+  }
+
+  .kanban-card {
+    width: 95px;
+    min-height: 85px;
+  }
+
+  .add-card-form {
+    flex-direction: column;
+  }
+
+  .add-card-form button {
+    width: 100%;
   }
 }

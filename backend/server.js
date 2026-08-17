@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 require("dotenv").config();
 const app = express();
+const Board = require("./models/Boards");
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
@@ -199,9 +200,28 @@ app.get("/api/youtube", async (req, res) => {
     });
   }
 });
+app.get("/api/profile", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch profile",
+    });
+  }
+});
 app.post("/api/signup", async (req, res) => {
   try {
-    const { email, password, selectedInterests } = req.body;
+    const { name, email, password, selectedInterests } = req.body;
 
     const existingUser = await User.findOne({ email });
 
@@ -212,6 +232,7 @@ app.post("/api/signup", async (req, res) => {
     }
 const hashedPassword=await bcrypt.hash(password,10);
     const user = new User({
+      name: (name || "").trim(),
       email,
       password:hashedPassword,
       selectedInterests
@@ -230,6 +251,7 @@ const hashedPassword=await bcrypt.hash(password,10);
       token,
       user: {
         id: user._id,
+        name: user.name,
         email: user.email,
         selectedInterests: user.selectedInterests
       }
@@ -275,6 +297,45 @@ app.patch("/api/interests", authMiddleware, async (req, res) => {
     });
   }
 });
+app.patch("/api/profile", authMiddleware, async (req, res) => {
+  try {
+    const updates = {};
+
+    if (typeof req.body.name === "string") {
+      updates.name = req.body.name.trim();
+    }
+
+    if (typeof req.body.bio === "string") {
+      updates.bio = req.body.bio.trim();
+    }
+
+    if (Array.isArray(req.body.selectedInterests)) {
+      updates.selectedInterests = req.body.selectedInterests
+        .filter((interest) => typeof interest === "string")
+        .map((interest) => interest.trim())
+        .filter(Boolean);
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      updates,
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({
+      message: "Failed to update profile"
+    });
+  }
+});
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -309,6 +370,7 @@ res.json({
   token,
   user: {
     id: user._id,
+    name: user.name,
     email: user.email,
     selectedInterests: user.selectedInterests
   }
@@ -327,6 +389,150 @@ app.get("/api/protected", authMiddleware, (req, res) => {
     message: "You are authenticated",
     userId: req.userId
   });
+});
+app.get("/api/boards", authMiddleware, async (req, res) => {
+  try {
+    const boards = await Board.find({
+      userId: req.userId
+    }).sort({ createdAt: 1 });
+
+    res.json(boards);
+  } catch (error) {
+    console.error("Error fetching boards:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch boards"
+    });
+  }
+});
+app.post("/api/boards", authMiddleware, async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        message: "Board name is required"
+      });
+    }
+
+    const trimmedName = name.trim();
+
+    const existingBoard = await Board.findOne({
+      userId: req.userId,
+      name: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i")
+    });
+
+    if (existingBoard) {
+      return res.status(409).json({
+        message: "A board with this name already exists"
+      });
+    }
+
+    const board = await Board.create({
+      userId: req.userId,
+      name: trimmedName,
+      resources: []
+    });
+
+    res.status(201).json(board);
+  } catch (error) {
+    console.error("Error creating board:", error);
+
+    res.status(500).json({
+      message: "Failed to create board"
+    });
+  }
+});
+app.post("/api/boards/:boardId/resources", authMiddleware, async (req, res) => {
+  try {
+    const { boardId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(boardId)) {
+      return res.status(400).json({
+        message: "Invalid board id"
+      });
+    }
+
+    const resource = req.body?.resource;
+
+    if (!resource || !resource.title) {
+      return res.status(400).json({
+        message: "Resource is required"
+      });
+    }
+
+    const board = await Board.findOne({
+      _id: boardId,
+      userId: req.userId
+    });
+
+    if (!board) {
+      return res.status(404).json({
+        message: "Board not found"
+      });
+    }
+
+    const resourceId = String(resource.id || resource.url || resource.title);
+
+    const alreadySaved = board.resources.some(
+      (saved) => String(saved.id) === resourceId
+    );
+
+    if (alreadySaved) {
+      return res.status(200).json(board);
+    }
+
+    board.resources.push({
+      id: resourceId,
+      title: resource.title,
+      description: resource.description,
+      thumbnail: resource.thumbnail || resource.image,
+      url: resource.url,
+      type: resource.type,
+      source: resource.source,
+      channel: resource.channel
+    });
+
+    await board.save();
+
+    res.status(201).json(board);
+  } catch (error) {
+    console.error("Error saving resource to board:", error);
+
+    res.status(500).json({
+      message: "Failed to save resource"
+    });
+  }
+});
+app.delete("/api/boards/:boardId", authMiddleware, async (req, res) => {
+  try {
+    const { boardId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(boardId)) {
+      return res.status(400).json({
+        message: "Invalid board id"
+      });
+    }
+
+    const board = await Board.findOneAndDelete({
+      _id: boardId,
+      userId: req.userId
+    });
+
+    if (!board) {
+      return res.status(404).json({
+        message: "Board not found"
+      });
+    }
+
+    res.json({ message: "Board deleted" });
+  } catch (error) {
+    console.error("Error deleting board:", error);
+
+    res.status(500).json({
+      message: "Failed to delete board"
+    });
+  }
 });
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

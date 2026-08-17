@@ -1,6 +1,7 @@
 import "./Interests.css";
 import {useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
+import { signup, storeSession } from "../../../api/user";
 function Interests() {
   const interests = [
     "React",
@@ -42,33 +43,15 @@ function Interests() {
       }
 
       try {
-        const response = await fetch("http://localhost:5000/api/signup", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            ...pendingSignup,
-            selectedInterests
-          })
+        const data = await signup({
+          ...pendingSignup,
+          selectedInterests
         });
 
-        const contentType = response.headers.get("content-type") || "";
-        const data = contentType.includes("application/json")
-          ? await response.json()
-          : null;
-        if (!response.ok) {
-          alert(data?.message || "Signup failed");
-          return;
-        }
-
-        localStorage.setItem("token", data.token);
-        if (data.user) {
-          localStorage.setItem("user", JSON.stringify(data.user));
-        }
+        storeSession(data);
       } catch (error) {
         console.error("Signup request failed:", error);
-        alert("Signup failed. Please try again.");
+        alert(error.message || "Signup failed. Please try again.");
         return;
       }
     }
