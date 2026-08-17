@@ -9,21 +9,17 @@ const INITIAL_COLUMNS = {
 };
 
 const COLUMN_ORDER = ["todo", "inprogress", "done"];
-
 function Kanban() {
   const [columns, setColumns] = useState(INITIAL_COLUMNS);
   const [newCardText, setNewCardText] = useState({ todo: "", inprogress: "", done: "" });
-
   function onDragEnd(result) {
     const { source, destination } = result;
     if (!destination) return;
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
-
     const sourceCol = columns[source.droppableId];
     const destCol = columns[destination.droppableId];
     const sourceCards = [...sourceCol.cards];
     const [moved] = sourceCards.splice(source.index, 1);
-
     if (source.droppableId === destination.droppableId) {
       sourceCards.splice(destination.index, 0, moved);
       setColumns(prev => ({
@@ -40,7 +36,6 @@ function Kanban() {
       }));
     }
   }
-
   function addCard(colId) {
     const text = newCardText[colId].trim();
     if (!text) return;
@@ -51,7 +46,6 @@ function Kanban() {
     }));
     setNewCardText(prev => ({ ...prev, [colId]: "" }));
   }
-
   function deleteCard(colId, cardId) {
     setColumns(prev => ({
       ...prev,
@@ -61,7 +55,6 @@ function Kanban() {
       }
     }));
   }
-
   return (
     <div className="kanban-page">
       <h1>Kanban Board</h1>

@@ -40,7 +40,7 @@ function Auth() {
     return value.trim();
   };
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     const safeName = sanitizeInput(name);
     const safeEmail = sanitizeInput(email);
 
@@ -71,13 +71,19 @@ function Auth() {
       return;
     }
 
-    console.log("Name:", safeName);
-    console.log("Email:", safeEmail);
-
-    navigate("/interests");
+    navigate("/interests", {
+      state: {
+        isNewUser: true,
+        pendingSignup: {
+          name: safeName,
+          email: safeEmail,
+          password
+        }
+      }
+    });
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const safeEmail = sanitizeInput(email);
 
     if (!safeEmail || !password) {
@@ -90,10 +96,42 @@ function Auth() {
       return;
     }
 
-    console.log("Login attempted");
-    console.log("Email:", safeEmail);
+    try {
+      const response = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: safeEmail,
+          password
+        })
+      });
 
-    navigate("/interests");
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await response.json()
+        : null;
+
+      if (!response.ok) {
+        alert(data?.message || "Login failed");
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+
+      navigate("/dashboard", {
+        state: {
+          selectedInterests: data.user?.selectedInterests || []
+        }
+      });
+    } catch (error) {
+      console.error("Login request failed:", error);
+      alert("Login failed. Please try again.");
+    }
   };
 
   return (

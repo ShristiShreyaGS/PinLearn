@@ -1,7 +1,15 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 
 function Navbar() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
+  };
+
   return (
     <nav className="navbar">
       <div className="logo">PinLearn</div>
@@ -17,7 +25,7 @@ function Navbar() {
         <input type="text" placeholder="Search..." />
       </div>
 
-      <div className="profile">Profile</div>
+      <button className="profile" onClick={handleLogout}>Log out</button>
     </nav>
   );
 }

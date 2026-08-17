@@ -2,10 +2,8 @@ import "./Dashboard.css";
 import ResourceCard from "../../ResourceCard/ResourceCard";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
-
 const VIDEO_CACHE_KEY = "pinlearn_video_cache_v1";
 const VIDEO_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-
 function readVideoCache() {
   try {
     const raw = localStorage.getItem(VIDEO_CACHE_KEY);
@@ -24,7 +22,6 @@ function writeVideoCache(cache) {
   try {
     localStorage.setItem(VIDEO_CACHE_KEY, JSON.stringify(cache));
   } catch {
-    // Ignore quota/storage errors and continue without persistent cache.
   }
 }
 
@@ -32,88 +29,102 @@ function resourceKey(resource) {
   return resource?.id || resource?.url || resource?.title;
 }
 
-const RESOURCES = [
-  {
-    id: 1,
-    topic: "React",
-    type: "Video",
-    title: "React Hooks Explained",
-    description: "Learn the basics of React Hooks.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 2,
-    topic: "React",
-    type: "Article",
-    title: "Understanding React Components",
-    description: "A beginner-friendly guide to React components.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 3,
-    topic: "React",
-    type: "Repository",
-    title: "React Projects",
-    description: "Explore projects built using React.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 4,
-    topic: "React",
-    type: "Project",
-    title: "React Dashboard",
-    description: "A dashboard project built with React.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 5,
-    topic: "AI",
-    type: "Video",
-    title: "Introduction to AI",
-    description: "Understand the basics of Artificial Intelligence.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 6,
-    topic: "AI",
-    type: "Article",
-    title: "How AI Works",
-    description: "An introduction to modern AI concepts.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 7,
-    topic: "AI",
-    type: "Repository",
-    title: "Awesome AI Projects",
-    description: "Explore interesting AI projects.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 8,
-    topic: "Playwright",
-    type: "Video",
-    title: "Playwright Basics",
-    description: "Get started with Playwright testing.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 9,
-    topic: "Playwright",
-    type: "Article",
-    title: "Understanding Playwright Fixtures",
-    description: "Learn about reusable Playwright fixtures.",
-    image: "https://placehold.co/600x400"
-  },
-  {
-    id: 10,
-    topic: "Playwright",
-    type: "Repository",
-    title: "Playwright Examples",
-    description: "Explore Playwright automation examples.",
-    image: "https://placehold.co/600x400"
-  }
+const FALLBACK_INTERESTS = [
+  "React",
+  "JavaScript",
+  "AI",
+  "Playwright",
+  "DSA",
+  "Node.js",
+  "Python",
+  "Angular",
+  "DevOps"
 ];
+
+const RESOURCES = [];
+
+// const RESOURCES = [
+//   {
+//     id: 1,
+//     topic: "React",
+//     type: "Video",
+//     title: "React Hooks Explained",
+//     description: "Learn the basics of React Hooks.",
+//     image: "https://placehold.co/600x400"
+//   },
+//   {
+//     id: 2,
+//     topic: "React",
+//     type: "Article",
+//     title: "Understanding React Components",
+//     description: "A beginner-friendly guide to React components.",
+//     image: "https://placehold.co/600x400"
+//   },
+//   {
+//     id: 3,
+//     topic: "React",
+//     type: "Repository",
+//     title: "React Projects",
+//     description: "Explore projects built using React.",
+//     image: "https://placehold.co/600x400"
+//   },
+//   {
+//     id: 4,
+//     topic: "React",
+//     type: "Project",
+//     title: "React Dashboard",
+//     description: "A dashboard project built with React.",
+//     image: "https://placehold.co/600x400"
+//   },
+//   {
+//     id: 5,
+//     topic: "AI",
+//     type: "Video",
+//     title: "Introduction to AI",
+//     description: "Understand the basics of Artificial Intelligence.",
+//     image: "https://placehold.co/600x400"
+//   },
+//   {
+//     id: 6,
+//     topic: "AI",
+//     type: "Article",
+//     title: "How AI Works",
+//     description: "An introduction to modern AI concepts.",
+//     image: "https://placehold.co/600x400"
+//   },
+//   {
+//     id: 7,
+//     topic: "AI",
+//     type: "Repository",
+//     title: "Awesome AI Projects",
+//     description: "Explore interesting AI projects.",
+//     image: "https://placehold.co/600x400"
+//   },
+//   {
+//     id: 8,
+//     topic: "Playwright",
+//     type: "Video",
+//     title: "Playwright Basics",
+//     description: "Get started with Playwright testing.",
+//     image: "https://placehold.co/600x400"
+//   },
+//   {
+//     id: 9,
+//     topic: "Playwright",
+//     type: "Article",
+//     title: "Understanding Playwright Fixtures",
+//     description: "Learn about reusable Playwright fixtures.",
+//     image: "https://placehold.co/600x400"
+//   },
+//   {
+//     id: 10,
+//     topic: "Playwright",
+//     type: "Repository",
+//     title: "Playwright Examples",
+//     description: "Explore Playwright automation examples.",
+//     image: "https://placehold.co/600x400"
+//   }
+// ];
 
 function Dashboard({ boards = [], setBoards = () => {} }) {
   const routerData = useLocation();
@@ -127,6 +138,7 @@ function Dashboard({ boards = [], setBoards = () => {} }) {
   const [resourceToSave, setResourceToSave] = useState(null);
 const [savedMessage,setSavedMessage]=useState("");
 const [videosByInterest, setVideosByInterest] = useState({});
+const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
 
   useEffect(() => {
     const allSaved = boards.flatMap((board) => board.resources || []);
@@ -191,7 +203,7 @@ const [videosByInterest, setVideosByInterest] = useState({});
   const interestsToRender = useMemo(() => {
     return selectedInterests.length
       ? selectedInterests
-      : [...new Set(RESOURCES.map((resource) => resource.topic))];
+      : FALLBACK_INTERESTS;
   }, [selectedInterests]);
 
   useEffect(() => {
@@ -259,6 +271,54 @@ const [videosByInterest, setVideosByInterest] = useState({});
     };
 
     fetchVideosByInterest();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [interestsToRender]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchRepositoriesByInterest = async () => {
+      try {
+        const entries = await Promise.all(
+          interestsToRender.map(async (interest) => {
+            const response = await fetch(
+              `http://localhost:5000/api/github?topic=${encodeURIComponent(interest)}`
+            );
+
+            if (!response.ok) {
+              throw new Error(`GitHub request failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const repositories = Array.isArray(data.items)
+              ? data.items.map((repository) => ({
+                  id: `github-${repository.id}`,
+                  topic: interest,
+                  type: "Repository",
+                  title: repository.full_name,
+                  description: repository.description || "No description provided.",
+                  image: repository.owner?.avatar_url || "https://placehold.co/600x400",
+                  url: repository.html_url,
+                  source: `GitHub | ${repository.stargazers_count.toLocaleString()} stars`
+                }))
+              : [];
+
+            return [interest, repositories];
+          })
+        );
+
+        if (isMounted) {
+          setRepositoriesByInterest(Object.fromEntries(entries));
+        }
+      } catch (error) {
+        console.error("Error fetching GitHub repositories:", error);
+      }
+    };
+
+    fetchRepositoriesByInterest();
 
     return () => {
       isMounted = false;
@@ -381,6 +441,7 @@ const [videosByInterest, setVideosByInterest] = useState({});
           const repositories = interestResources.filter(
             (resource) => resource.type === "Repository"
           );
+          const githubRepositories = repositoriesByInterest[interest] || [];
 
           const projects = interestResources.filter(
             (resource) => resource.type === "Project"
@@ -435,13 +496,13 @@ const [videosByInterest, setVideosByInterest] = useState({});
                 </>
               )}
 
-              {repositories.length > 0 && (
+              {(githubRepositories.length > 0 || repositories.length > 0) && (
                 <>
                   <h3>Repositories</h3>
 
                   <div className="content-grid">
 
-                    {repositories.map((resource) => (
+                    {[...githubRepositories, ...repositories].map((resource) => (
                       <ResourceCard
                         key={resource.id}
                         resource={resource}

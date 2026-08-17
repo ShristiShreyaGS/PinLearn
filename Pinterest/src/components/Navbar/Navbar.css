@@ -63,6 +63,7 @@
 }
 
 .profile {
+  font-family: inherit;
   padding: 8px 14px;
   border: 1px solid #d1d5db;
   border-radius: 999px;
@@ -71,6 +72,12 @@
   color: #111827;
   background: #ffffff;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.profile:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
 }
 
 @media (max-width: 900px) {
