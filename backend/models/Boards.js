@@ -9,7 +9,28 @@ const resourceSchema = new mongoose.Schema(
     url: String,
     type: String,
     source: String,
-    channel: String
+    channel: String,
+
+    status: {
+      type: String,
+      enum: ["saved", "visited", "in_progress", "completed"],
+      default: "saved"
+    },
+
+    savedAt: {
+      type: Date,
+      default: Date.now
+    },
+
+    visitedAt: {
+      type: Date,
+      default: null
+    },
+
+    completedAt: {
+      type: Date,
+      default: null
+    }
   },
   { _id: false }
 );

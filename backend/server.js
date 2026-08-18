@@ -504,6 +504,72 @@ app.post("/api/boards/:boardId/resources", authMiddleware, async (req, res) => {
     });
   }
 });
+app.patch("/api/progress/status", authMiddleware, async (req, res) => {
+  try {
+    const { boardId, resourceId, status } = req.body;
+
+    const allowedStatuses = [
+      "saved",
+      "visited",
+      "in_progress",
+      "completed"
+    ];
+
+    if (
+      !boardId ||
+      !resourceId ||
+      !allowedStatuses.includes(status)
+    ) {
+      return res.status(400).json({
+        message: "Invalid request"
+      });
+    }
+
+    const board = await Board.findOne({
+      _id: boardId,
+      userId: req.userId
+    });
+
+    if (!board) {
+      return res.status(404).json({
+        message: "Board not found"
+      });
+    }
+
+    const resource = board.resources.find(
+      (r) => String(r.id) === String(resourceId)
+    );
+
+    if (!resource) {
+      return res.status(404).json({
+        message: "Resource not found"
+      });
+    }
+
+    resource.status = status;
+
+    if (status === "visited" && !resource.visitedAt) {
+      resource.visitedAt = new Date();
+    }
+
+    if (status === "completed" && !resource.completedAt) {
+      resource.completedAt = new Date();
+    }
+
+    await board.save();
+
+    res.json({
+      message: "Status updated",
+      resource
+    });
+  } catch (error) {
+    console.error("Error updating resource status:", error);
+
+    res.status(500).json({
+      message: "Failed to update status"
+    });
+  }
+});
 app.delete("/api/boards/:boardId", authMiddleware, async (req, res) => {
   try {
     const { boardId } = req.params;

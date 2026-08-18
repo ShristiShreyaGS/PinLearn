@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./Boards.css";
+import { updateResourceStatus } from "../../../api/progress";
 
 function Boards({
   boards = [],
@@ -132,48 +133,80 @@ function Boards({
       )}
 
       {/* Boards List */}
-      {boards.length === 0 ? (
-        <div className="empty-boards">
-          <h2>No boards yet</h2>
-          <p>Create your first board to start saving resources.</p>
+{boards.length === 0 ? (
+  <div className="empty-boards">
+    <h2>No boards yet</h2>
+    <p>Create your first board to start saving resources.</p>
+
+    <button
+      className="create-board-btn"
+      onClick={() => setShowCreateBoard(true)}
+    >
+      + Create Board
+    </button>
+  </div>
+) : (
+  <div className="boards-grid">
+    {boards.map((board) => {
+      const totalResources = board.resources?.length || 0;
+
+      const completedResources =
+        board.resources?.filter(
+          (resource) => resource.status === "completed"
+        ).length || 0;
+
+      const progressPercentage =
+        totalResources === 0
+          ? 0
+          : Math.round(
+              (completedResources / totalResources) * 100
+            );
+
+      return (
+        <div
+          className="board-card"
+          key={board._id}
+          onClick={() => handleOpenBoard(board)}
+        >
+          <div className="board-card-content">
+            <h2>{board.name}</h2>
+
+            <p>
+              {totalResources}{" "}
+              {totalResources === 1
+                ? "resource"
+                : "resources"}
+            </p>
+
+            <p>{completedResources} completed</p>
+
+            <p>{progressPercentage}% progress</p>
+            
+         
+<div className="progress-bar">
+  <div
+    className="progress-fill"
+    style={{
+      width: `${progressPercentage}%`
+    }}
+  />
+  </div>
+</div>
 
           <button
-            className="create-board-btn"
-            onClick={() => setShowCreateBoard(true)}
+            className="delete-board-btn"
+            title="Delete board"
+            onClick={(event) =>
+              handleDeleteBoard(event, board._id)
+            }
           >
-            + Create Board
+            ×
           </button>
         </div>
-      ) : (
-        <div className="boards-grid">
-          {boards.map((board) => (
-            <div
-              className="board-card"
-              key={board._id}
-              onClick={() => handleOpenBoard(board)}
-            >
-              <div className="board-card-content">
-                <h2>{board.name}</h2>
-
-                <p>
-                  {board.resources?.length || 0}{" "}
-                  {board.resources?.length === 1
-                    ? "resource"
-                    : "resources"}
-                </p>
-              </div>
-
-              <button
-                className="delete-board-btn"
-                title="Delete board"
-                onClick={(event) => handleDeleteBoard(event, board._id)}
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+      );
+    })}
+  </div>
+)}
 
       {/* Selected Board */}
       {selectedBoard && (
@@ -183,8 +216,15 @@ function Boards({
               <h2>{selectedBoard.name}</h2>
 
               <p>
-                {selectedBoard.resources?.length || 0} saved resources
-              </p>
+  {
+    selectedBoard.resources.filter(
+      (resource) => resource.status === "completed"
+    ).length
+  }
+  {" / "}
+  {selectedBoard.resources.length}
+  {" completed"}
+</p>
             </div>
 
             <button
@@ -210,8 +250,34 @@ function Boards({
                     <img
                       src={resource.thumbnail}
                       alt={resource.title}
+                      
                     />
+                    
                   )}
+                  <p className="resource-status">
+  Status: {resource.status || "saved"}
+</p>
+<select
+  className="status-select"
+  value={resource.status || "saved"}
+  onChange={async (e) => {
+    try {
+      await updateResourceStatus(
+        selectedBoard._id,
+        resource.id,
+        e.target.value
+      );
+      await refreshBoards();
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    }
+  }}
+>
+  <option value="saved">Saved</option>
+  <option value="visited">Visited</option>
+  <option value="in_progress">In Progress</option>
+  <option value="completed">Completed</option>
+</select>
 
                   <div className="resource-card-content">
                     <h3>{resource.title}</h3>

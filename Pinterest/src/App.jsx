@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar/Navbar";
 import useBoards from "./hooks/useBoards";
 import Profile from "./components/Page/Profile/Profile";
 
+
 function App() {
   const {
     boards,
