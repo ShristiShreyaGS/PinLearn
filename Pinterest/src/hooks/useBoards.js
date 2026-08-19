@@ -49,6 +49,25 @@ export default function useBoards() {
     setBoards((previous) => previous.filter((board) => board._id !== boardId));
   }, []);
 
+  const updateBoardResource = useCallback((boardId, resourceId, resourceUpdate) => {
+    setBoards((previous) =>
+      previous.map((board) => {
+        if (board._id !== boardId) {
+          return board;
+        }
+
+        return {
+          ...board,
+          resources: board.resources.map((resource) =>
+            String(resource.id) === String(resourceId)
+              ? { ...resource, ...resourceUpdate }
+              : resource
+          )
+        };
+      })
+    );
+  }, []);
+
   return {
     boards,
     loading,
@@ -56,6 +75,7 @@ export default function useBoards() {
     refreshBoards,
     createBoard,
     saveResourceToBoard,
-    deleteBoard
+    deleteBoard,
+    updateBoardResource
   };
 }

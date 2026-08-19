@@ -30,7 +30,24 @@ const resourceSchema = new mongoose.Schema(
     completedAt: {
       type: Date,
       default: null
+    },
+    lastTimestamp: {
+  type: String,
+  default: ""
+},
+
+notes: {
+  type: [
+    {
+      content: String,
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
     }
+  ],
+  default: []
+}
   },
   { _id: false }
 );

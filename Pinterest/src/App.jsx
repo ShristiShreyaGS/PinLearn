@@ -7,9 +7,21 @@ import Kanban from "./components/Page/Kanban/Kanban";
 import Navbar from "./components/Navbar/Navbar";
 import useBoards from "./hooks/useBoards";
 import Profile from "./components/Page/Profile/Profile";
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
 
 
 function App() {
+  const mode = useSelector(
+  (state) => state.theme.mode
+);
+
+useEffect(() => {
+  document.documentElement.classList.toggle(
+    "dark",
+    mode === "dark"
+  );
+}, [mode]);
   const {
     boards,
     loading: boardsLoading,
@@ -17,10 +29,13 @@ function App() {
     refreshBoards,
     createBoard,
     saveResourceToBoard,
-    deleteBoard
+    deleteBoard,
+    updateBoardResource
   } = useBoards();
 
   return (
+    
+
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Auth />} />
@@ -60,6 +75,7 @@ function App() {
                 createBoard={createBoard}
                 deleteBoard={deleteBoard}
                 refreshBoards={refreshBoards}
+                updateBoardResource={updateBoardResource}
               />
             </>
           }

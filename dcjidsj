@@ -1,0 +1,53 @@
+* [33mcommit 72930ad9d256d1b3597d3c22dec92f784655bb09[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+[31m|[m Author: Shreya Shristi <Shreya.Shristi@Geminisolutions.com>
+[31m|[m Date:   Tue Aug 18 11:35:32 2026 +0530
+[31m|[m 
+[31m|[m     Leveling up towards analytics
+[31m|[m 
+* [33mcommit f655d384d9bf652c1b563ff548e68a536e7b61d4[m
+[31m|[m Author: Shreya Shristi <Shreya.Shristi@Geminisolutions.com>
+[31m|[m Date:   Mon Aug 17 22:45:59 2026 +0530
+[31m|[m 
+[31m|[m     Saving resources per user, added a profile page which is editable as well
+[31m|[m 
+* [33mcommit 5b971f073ede2dbd99373733147d2496e86efcd7[m
+[31m|[m Author: Shreya Shristi <Shreya.Shristi@Geminisolutions.com>
+[31m|[m Date:   Mon Aug 17 09:49:45 2026 +0530
+[31m|[m 
+[31m|[m      implemented secure auth flow, made models
+[31m|[m 
+* [33mcommit da69247bf871a6ba08a75986522bdd4ceb0686da[m
+[31m|[m Author: Shreya Shristi <Shreya.Shristi@Geminisolutions.com>
+[31m|[m Date:   Fri Aug 14 09:16:20 2026 +0530
+[31m|[m 
+[31m|[m     fixed css, overall structure, added kanban
+[31m|[m 
+* [33mcommit d1e5a206449d20de3d400593f2b5c827d881c09f[m
+[31m|[m Author: Shreya Shristi <Shreya.Shristi@Geminisolutions.com>
+[31m|[m Date:   Wed Aug 12 15:59:53 2026 +0530
+[31m|[m 
+[31m|[m     Added backedn and Youtube API
+[31m|[m 
+* [33mcommit b0ca89a5a59f3a1b837654fb6e15c3d1db257406[m
+[31m|[m Author: Shreya Shristi <Shreya.Shristi@Geminisolutions.com>
+[31m|[m Date:   Wed Aug 12 10:10:32 2026 +0530
+[31m|[m 
+[31m|[m     Fixed the css navbar
+[31m|[m 
+* [33mcommit f63e2c0627bbb2caf1653eb01619f8d16c861319[m
+[31m|[m Author: Shreya Shristi <Shreya.Shristi@Geminisolutions.com>
+[31m|[m Date:   Tue Aug 11 10:57:46 2026 +0530
+[31m|[m 
+[31m|[m     Added boards feature
+[31m|[m 
+* [33mcommit c8686150bffdad8e2dd581697a7b9c0d6b6c4dc6[m
+[31m|[m Author: Shreya Shristi <Shreya.Shristi@Geminisolutions.com>
+[31m|[m Date:   Mon Aug 10 11:54:09 2026 +0530
+[31m|[m 
+[31m|[m     Added dashboard, auth and resource components
+[31m|[m 
+* [33mcommit be544bac5c4d5ac5bbaf67c9d756b75847df9fd3[m
+  Author: Shreya Shristi <Shreya.Shristi@Geminisolutions.com>
+  Date:   Tue Aug 4 16:36:30 2026 +0530
+  
+      Initialize project using Create React App

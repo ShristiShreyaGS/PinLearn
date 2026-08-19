@@ -327,3 +327,37 @@
     width: 100%;
   }
 }
+
+.dark .kanban-page {
+  background: #020617;
+  color: #f8fafc;
+}
+
+.dark .kanban-board {
+  border-color: #475569;
+  background: #0f172a;
+}
+
+.dark .kanban-column {
+  border-color: #475569;
+  background: #0f172a;
+}
+
+.dark .kanban-column-header h2 {
+  color: #e2e8f0;
+}
+
+.dark .kanban-cards.dragging-over {
+  background: #1e293b;
+}
+
+.dark .add-card-form input {
+  border-color: #475569;
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+.dark .add-card-form input:focus {
+  border-color: #86efac;
+  background: #1e293b;
+}

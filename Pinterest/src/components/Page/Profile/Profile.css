@@ -320,3 +320,43 @@
     width: 100%;
   }
 }
+
+.dark .profile-page {
+  color: #e2e8f0;
+}
+
+.dark .profile-page h1,
+.dark .profile-section h2,
+.dark .profile-section strong {
+  color: #f8fafc;
+}
+
+.dark .profile-section {
+  border-color: #334155;
+  background: #0f172a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.dark .profile-section h2 {
+  border-color: #334155;
+}
+
+.dark .profile-section p,
+.dark .profile-form label {
+  color: #cbd5e1;
+}
+
+.dark .profile-form input,
+.dark .profile-form textarea,
+.dark .profile-form input[readonly] {
+  border-color: #475569;
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+.dark .profile-cancel-button,
+.dark .interest-option {
+  border-color: #475569;
+  background: #1e293b;
+  color: #e2e8f0;
+}

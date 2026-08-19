@@ -134,3 +134,36 @@
   opacity: 0.72;
   cursor: not-allowed;
 }
+
+.dark .resource-card {
+  border-color: #334155;
+  background: #0f172a;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+.dark .resource-image {
+  background: #334155;
+}
+
+.dark .resource-type,
+.dark .resource-actions button {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.dark .resource-info h3 {
+  color: #f8fafc;
+}
+
+.dark .resource-info p,
+.dark .resource-info p + p {
+  color: #94a3b8;
+}
+
+.dark .resource-actions {
+  border-color: #334155;
+}
+
+.dark .resource-actions button:hover {
+  background: #334155;
+}

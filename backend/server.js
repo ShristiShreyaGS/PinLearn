@@ -570,6 +570,95 @@ app.patch("/api/progress/status", authMiddleware, async (req, res) => {
     });
   }
 });
+app.post("/api/resources/note", authMiddleware, async (req, res) => {
+  try {
+    const { boardId, resourceId, content } = req.body;
+
+    if (!boardId || !resourceId || !content?.trim()) {
+      return res.status(400).json({
+        message: "Invalid request"
+      });
+    }
+
+    const board = await Board.findOne({
+      _id: boardId,
+      userId: req.userId
+    });
+
+    if (!board) {
+      return res.status(404).json({
+        message: "Board not found"
+      });
+    }
+
+    const resource = board.resources.find(
+      (r) => String(r.id) === String(resourceId)
+    );
+
+    if (!resource) {
+      return res.status(404).json({
+        message: "Resource not found"
+      });
+    }
+
+    resource.notes.push({
+      content: content.trim()
+    });
+
+    await board.save();
+
+    res.json({
+      message: "Note added",
+      notes: resource.notes
+    });
+  } catch (error) {
+    console.error("Error adding note:", error);
+
+    res.status(500).json({
+      message: "Failed to add note"
+    });
+  }
+});
+app.delete("/api/resources/note", authMiddleware, async (req, res) => {
+  try {
+    const { boardId, resourceId, noteIndex } = req.body;
+
+    const board = await Board.findOne({
+      _id: boardId,
+      userId: req.userId
+    });
+
+    if (!board) {
+      return res.status(404).json({
+        message: "Board not found"
+      });
+    }
+
+    const resource = board.resources.find(
+      (r) => String(r.id) === String(resourceId)
+    );
+
+    if (!resource) {
+      return res.status(404).json({
+        message: "Resource not found"
+      });
+    }
+
+    resource.notes.splice(noteIndex, 1);
+
+    await board.save();
+
+    res.json({
+      message: "Note deleted"
+    });
+  } catch (error) {
+    console.error("Error deleting note:", error);
+
+    res.status(500).json({
+      message: "Failed to delete note"
+    });
+  }
+});
 app.delete("/api/boards/:boardId", authMiddleware, async (req, res) => {
   try {
     const { boardId } = req.params;

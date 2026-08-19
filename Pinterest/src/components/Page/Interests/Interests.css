@@ -148,3 +148,32 @@
     max-width: 360px;
   }
 }
+
+.dark .interests-page {
+  background: #020617;
+  color: #f8fafc;
+}
+
+.dark .interests-page > p,
+.dark .interests-page > p + p {
+  color: #94a3b8;
+}
+
+.dark .interest-grid button,
+.dark .interest-card {
+  border-color: #475569;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.dark .interest-grid button:hover,
+.dark .interest-card:hover {
+  border-color: #94a3b8;
+}
+
+.dark .interest-grid button.selected,
+.dark .interest-card.selected {
+  border-color: #2563eb;
+  background: #1d4ed8;
+  color: #ffffff;
+}

@@ -328,3 +328,56 @@
     text-align: center;
   }
 }
+
+.dark .dashboard {
+  background: #020617;
+  color: #e2e8f0;
+}
+
+.dark .dashboard-content h1,
+.dark .dashboard-content h2,
+.dark .dashboard-content h3,
+.dark .dashboard-content h4,
+.dark .board-selector h3,
+.dark .board-selector h4 {
+  color: #f8fafc;
+}
+
+.dark .dashboard-content > p,
+.dark .small-heading,
+.dark .welcome-section > p:last-child {
+  color: #94a3b8 !important;
+}
+
+.dark .interest-pills span {
+  border-color: #475569;
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.dark .section-heading button {
+  color: #cbd5e1;
+}
+
+.dark .section-heading button:hover {
+  color: #ffffff;
+}
+
+.dark .board-selector,
+.dark .boards-section {
+  border-color: #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.dark .board-selector button,
+.dark .board-selector .close-button {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.dark .board-selector button:hover,
+.dark .board-selector .close-button:hover {
+  background: #334155;
+  color: #ffffff;
+}

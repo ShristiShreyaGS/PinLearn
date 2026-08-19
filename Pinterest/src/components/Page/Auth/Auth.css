@@ -197,3 +197,40 @@
     padding: 24px 16px 40px;
   }
 }
+
+.dark .auth-page {
+  background: linear-gradient(145deg, #020617 0%, #0f172a 100%);
+  color: #e2e8f0;
+}
+
+.dark .auth-visual {
+  background: linear-gradient(160deg, #172554 0%, #312e81 100%);
+}
+
+.dark .visual-overlay h2,
+.dark .visual-overlay p {
+  color: #f8fafc;
+}
+
+.dark .floating-card,
+.dark .auth-section,
+.dark .auth-container {
+  border-color: #334155;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.dark .auth-container > p,
+.dark .signup-text {
+  color: #94a3b8;
+}
+
+.dark .signup-text span {
+  color: #f8fafc;
+}
+
+.dark .auth-container input {
+  border-color: #475569;
+  background: #1e293b;
+  color: #f8fafc;
+}
