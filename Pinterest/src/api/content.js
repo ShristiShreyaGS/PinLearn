@@ -22,7 +22,7 @@ export async function fetchRepositories(topic) {
         description: repository.description || "No description provided.",
         image: repository.owner?.avatar_url || "https://placehold.co/600x400",
         url: repository.html_url,
-        source: `GitHub | ${repository.stargazers_count.toLocaleString()} stars`
+        source: `GitHub | ${Number(repository.stargazers_count || 0).toLocaleString()} stars`
       }))
     : [];
 }

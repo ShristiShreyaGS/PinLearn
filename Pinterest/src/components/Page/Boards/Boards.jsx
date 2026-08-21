@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { updateResourceStatus } from "../../../api/progress";
 import { addNote,deleteNote } from "../../../api/notes";
+import {useNavigate} from "react-router-dom";
+import PageBackdrop from "../PageBackdrop";
 
 function Boards({
   boards = [],
@@ -18,6 +20,8 @@ function Boards({
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState("");
   const [noteText, setNoteText] = useState({});
+  const navigate=useNavigate();
+
   useEffect(() => {
     if (refreshBoards) {
       refreshBoards();
@@ -65,7 +69,7 @@ function Boards({
   };
 
   const handleOpenBoard = (board) => {
-    setSelectedBoardId(board._id);
+    navigate(`/boards/${board._id}`);
   };
 
   const handleCloseBoard = () => {
@@ -74,7 +78,8 @@ function Boards({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-slate-950 mx-auto max-w-7xl px-4 py-8 pb-12 sm:px-6 lg:px-10">
+      <div className="relative isolate min-h-screen bg-transparent mx-auto max-w-7xl px-4 py-8 pb-12 sm:px-6 lg:px-10">
+        <PageBackdrop className="pointer-events-none absolute inset-0 z-0 min-h-full" />
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">My Boards</h2>
         <p className="mt-2 text-slate-500 dark:text-slate-400">Loading boards...</p>
       </div>
@@ -82,12 +87,13 @@ function Boards({
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 mx-auto max-w-7xl px-4 py-8 pb-12 sm:px-6 lg:px-10">
+    <div className="relative isolate min-h-screen bg-transparent mx-auto max-w-7xl px-4 py-8 pb-12 sm:px-6 lg:px-10">
+      <PageBackdrop className="pointer-events-none absolute inset-0 z-0 min-h-full" />
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4 max-md:flex-col max-md:items-start">
         <h1 className="m-0 text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-[44px]">My Boards</h1>
 
         <button
-          className="cursor-pointer rounded-full border-0 bg-gradient-to-br from-[#e60023] to-[#ff3b30] px-6 py-3 text-[15px] font-semibold text-white shadow-[0_8px_20px_rgba(230,0,35,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(230,0,35,0.35)] max-sm:w-full"
+          className="cursor-pointer rounded-full border-0 bg-gradient-to-br from-[#0b1736] to-[#1e3a8a] px-6 py-3 text-[15px] font-semibold text-white shadow-[0_8px_20px_rgba(11,23,54,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(11,23,54,0.3)] max-sm:w-full"
           onClick={() => setShowCreateBoard(true)}
         >
           + Create Board
@@ -128,7 +134,7 @@ function Boards({
             />
 
             <button
-              className="mt-3 w-full cursor-pointer rounded-full border-0 bg-gradient-to-br from-[#e60023] to-[#ff3b30] p-3.5 text-[15px] font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-3 w-full cursor-pointer rounded-full border-0 bg-gradient-to-br from-[#0b1736] to-[#1e3a8a] p-3.5 text-[15px] font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
               onClick={handleCreateBoard}
               disabled={!newBoardName.trim() || creating}
             >
@@ -145,7 +151,7 @@ function Boards({
           <p className="mb-6 text-slate-500 dark:text-slate-400">Create your first board to start saving resources.</p>
 
           <button
-            className="cursor-pointer rounded-full border-0 bg-gradient-to-br from-[#e60023] to-[#ff3b30] px-6 py-3 text-[15px] font-semibold text-white shadow-[0_8px_20px_rgba(230,0,35,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(230,0,35,0.35)] max-sm:w-full"
+            className="cursor-pointer rounded-full border-0 bg-gradient-to-br from-[#0b1736] to-[#1e3a8a] px-6 py-3 text-[15px] font-semibold text-white shadow-[0_8px_20px_rgba(11,23,54,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(11,23,54,0.3)] max-sm:w-full"
             onClick={() => setShowCreateBoard(true)}
           >
             + Create Board
@@ -155,19 +161,16 @@ function Boards({
         <div className="mt-6 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] items-stretch gap-[22px]">
           {boards.map((board) => {
             const totalResources = board.resources?.length || 0;
-
             const completedResources =
               board.resources?.filter(
                 (resource) => resource.status === "completed"
               ).length || 0;
-
             const progressPercentage =
               totalResources === 0
                 ? 0
                 : Math.round(
                   (completedResources / totalResources) * 100
                 );
-
             return (
               <div
                 className="group relative min-h-[190px] cursor-pointer overflow-hidden rounded-[22px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06),0_18px_40px_rgba(15,23,42,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.3)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_28px_rgba(15,23,42,0.1),0_24px_50px_rgba(15,23,42,0.14)] sm:p-6"
@@ -191,7 +194,7 @@ function Boards({
 
                   <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-slate-700">
                     <div
-                      className="h-full rounded-full bg-green-500 transition-[width] duration-300"
+                      className="h-full rounded-full bg-gradient-to-r from-[#0b1736] to-[#3b82f6] transition-[width] duration-300"
                       style={{
                         width: `${progressPercentage}%`
                       }}
@@ -351,63 +354,63 @@ function Boards({
                       <small className="text-slate-500">{resource.channel}</small>
                     )}
                     {resource.notes?.length > 0 && (
-  <div className="mt-4 border-t border-slate-200 pt-3">
-    <h4 className="mb-2 text-sm font-semibold text-slate-800">
-      Notes
-    </h4>
+                      <div className="mt-4 border-t border-slate-200 pt-3">
+                        <h4 className="mb-2 text-sm font-semibold text-slate-800">
+                          Notes
+                        </h4>
 
-    {resource.notes.map((note, index) => (
-      <div
-  key={index}
-  className="mb-2 rounded-lg bg-slate-50 p-2"
->
-  <div className="flex items-start justify-between gap-2">
-    <p className="text-sm text-slate-700">
-      {note.content}
-    </p>
+                        {resource.notes.map((note, index) => (
+                          <div
+                            key={index}
+                            className="mb-2 rounded-lg bg-slate-50 p-2"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm text-slate-700">
+                                {note.content}
+                              </p>
 
-    <button
-      className="text-red-500 hover:text-red-700"
-      onClick={async () => {
-        const confirmed=window.confirm(
-          "Are you sure you want to delete this note? "
-        );
-        if(!confirmed){
-          return;
-        }
-        try {
-          await deleteNote(
-            selectedBoard._id,
-            resource.id,
-            index
-          );
+                              <button
+                                className="text-red-500 hover:text-red-700"
+                                onClick={async () => {
+                                  const confirmed = window.confirm(
+                                    "Are you sure you want to delete this note? "
+                                  );
+                                  if (!confirmed) {
+                                    return;
+                                  }
+                                  try {
+                                    await deleteNote(
+                                      selectedBoard._id,
+                                      resource.id,
+                                      index
+                                    );
 
-          updateBoardResource(
-            selectedBoard._id,
-            resource.id,
-            {
-              notes: resource.notes.filter((_, noteIndex) => noteIndex !== index)
-            }
-          );
-        } catch (error) {
-          console.error(error);
-        }
-      }}
-    >
-      ✕
-    </button>
-  </div>
+                                    updateBoardResource(
+                                      selectedBoard._id,
+                                      resource.id,
+                                      {
+                                        notes: resource.notes.filter((_, noteIndex) => noteIndex !== index)
+                                      }
+                                    );
+                                  } catch (error) {
+                                    console.error(error);
+                                  }
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </div>
 
-  <small className="text-slate-400">
-    {new Date(
-      note.createdAt
-    ).toLocaleDateString()}
-  </small>
-</div>
+                            <small className="text-slate-400">
+                              {new Date(
+                                note.createdAt
+                              ).toLocaleDateString()}
+                            </small>
+                          </div>
 
-    ))}
-  </div>
-)}
+                        ))}
+                      </div>
+                    )}
 
                     {resource.url && (
                       <a
@@ -415,7 +418,7 @@ function Boards({
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                       <div> <span className="mt-3 inline-block font-medium text-blue-600 hover:underline"> Open Resource</span></div>
+                        <div> <span className="mt-3 inline-block font-medium text-blue-600 hover:underline"> Open Resource</span></div>
                       </a>
                     )}
                   </div>

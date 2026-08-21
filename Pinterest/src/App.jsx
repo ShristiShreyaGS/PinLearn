@@ -9,19 +9,20 @@ import useBoards from "./hooks/useBoards";
 import Profile from "./components/Page/Profile/Profile";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
-
+import BoardDetails from "./components/Page/Boards/BoardDetails";
+import ResourceDetails from "./components/Page/Boards/ResourceDetails";
 
 function App() {
   const mode = useSelector(
-  (state) => state.theme.mode
-);
-
-useEffect(() => {
-  document.documentElement.classList.toggle(
-    "dark",
-    mode === "dark"
+    (state) => state.theme.mode
   );
-}, [mode]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle(
+      "dark",
+      mode === "dark"
+    );
+  }, [mode]);
   const {
     boards,
     loading: boardsLoading,
@@ -34,7 +35,7 @@ useEffect(() => {
   } = useBoards();
 
   return (
-    
+
 
     <BrowserRouter>
       <Routes>
@@ -78,6 +79,29 @@ useEffect(() => {
                 updateBoardResource={updateBoardResource}
               />
             </>
+          }
+        />
+        <Route
+          path="/boards/:boardId"
+          element={
+            <>
+              <Navbar />
+              <BoardDetails
+                boards={boards}
+                updateBoardResource={updateBoardResource} />
+            </>
+          }
+        />
+        <Route
+          path="/boards/:boardId/resources/:resourceId"
+          element={
+            <>
+              <Navbar />
+<ResourceDetails
+  boards={boards}
+  updateBoardResource={updateBoardResource}
+  refreshBoards={refreshBoards}
+/>            </>
           }
         />
         <Route

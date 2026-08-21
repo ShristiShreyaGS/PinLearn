@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./Profile.css";
+import PageBackdrop from "../PageBackdrop";
 import { getProfile, updateProfile } from "../../../api/user";
 
 const interests = [
@@ -27,6 +28,7 @@ function Profile() {
     const loadProfile = async () => {
       try {
         const data = await getProfile();
+        setIsEditing(false);
         setProfile(data);
         setForm({
           name: data.name || "",
@@ -99,7 +101,9 @@ function Profile() {
   };
 
   return (
-    <div className="profile-page">
+    <main className="profile-page relative isolate min-h-screen">
+      <PageBackdrop />
+      <div className="relative z-10">
       <div className="profile-header">
         <h1>My Profile</h1>
         {!isEditing && (
@@ -112,7 +116,7 @@ function Profile() {
       {saveMessage && <p className="profile-save-message">{saveMessage}</p>}
 
       {isEditing ? (
-        <form className="profile-section profile-form" onSubmit={handleSave}>
+        <form id="profile-edit-form" className="profile-section profile-form" onSubmit={handleSave}>
           <h2>Edit Personal Information</h2>
           <label>
             Name
@@ -135,14 +139,6 @@ function Profile() {
               rows={4}
             />
           </label>
-          <div className="profile-form-actions">
-            <button className="profile-cancel-button" type="button" onClick={cancelEditing}>
-              Cancel
-            </button>
-            <button className="profile-save-button" type="submit" disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save changes"}
-            </button>
-          </div>
         </form>
       ) : (
         <div className="profile-section">
@@ -197,7 +193,25 @@ function Profile() {
           <p>No interests selected yet.</p>
         )}
       </div>
-    </div>
+
+      {isEditing && (
+        <div className="profile-form-actions">
+          <button className="profile-cancel-button" type="button" onClick={cancelEditing}>
+            Cancel
+          </button>
+          <button
+            className="profile-save-button"
+            type="submit"
+            form="profile-edit-form"
+            disabled={isSaving}
+          >
+            {isSaving ? "Saving..." : "Save changes"}
+          </button>
+        </div>
+      )}
+      
+      </div>
+    </main>
   );
 }
 

@@ -1,0 +1,12 @@
+.page-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -1 !important;
+  min-height: 100vh;
+  pointer-events: none;
+  background: linear-gradient(135deg, #f4f8ff 0%, #e6f0ff 52%, #f5f2ea 100%);
+}
+
+.dark .page-backdrop {
+  background: linear-gradient(135deg, #020617 0%, #0f1d3d 52%, #111827 100%);
+}

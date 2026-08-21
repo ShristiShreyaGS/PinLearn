@@ -1,7 +1,7 @@
 .auth-page {
   min-height: 100vh;
   display: flex;
-  background: linear-gradient(145deg, #f8fafc 0%, #eef2ff 100%);
+  background: transparent;
 }
 
 
@@ -13,7 +13,7 @@
   position: relative;
   overflow: hidden;
 
-  background: linear-gradient(160deg, #dbeafe 0%, #ede9fe 100%);
+  background: linear-gradient(160deg, #dbeafe 0%, #bfdbfe 100%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -30,7 +30,7 @@
   font-size: clamp(32px, 4.8vw, 52px);
   line-height: 1.08;
   margin: 0 0 20px;
-  color: #0f172a;
+  color: #0b1736;
 }
 
 .visual-overlay p {
@@ -199,12 +199,12 @@
 }
 
 .dark .auth-page {
-  background: linear-gradient(145deg, #020617 0%, #0f172a 100%);
+  background: transparent;
   color: #e2e8f0;
 }
 
 .dark .auth-visual {
-  background: linear-gradient(160deg, #172554 0%, #312e81 100%);
+  background: linear-gradient(160deg, #0b1736 0%, #1e3a8a 100%);
 }
 
 .dark .visual-overlay h2,

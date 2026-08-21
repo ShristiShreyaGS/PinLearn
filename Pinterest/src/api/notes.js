@@ -31,3 +31,21 @@ export async function deleteNote(
     }
   });
 }
+
+export async function updateNote(
+  boardId,
+  resourceId,
+  noteIndex,
+  content
+) {
+  return apiRequest("/api/resources/note", {
+    method: "PATCH",
+    auth: true,
+    body: {
+      boardId,
+      resourceId,
+      noteIndex,
+      content
+    }
+  });
+}

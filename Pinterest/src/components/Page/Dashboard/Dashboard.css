@@ -1,6 +1,6 @@
 .dashboard {
   min-height: 100vh;
-  background: #f8fafc;
+  background: transparent;
   color: #1f2937;
 }
 
@@ -86,6 +86,7 @@
   font-size: 38px;
   line-height: 1.12;
   letter-spacing: -0.8px;
+  color: #0b1736;
 }
 
 .dashboard-content > p {
@@ -155,8 +156,8 @@
   padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid #d1d5db;
-  background: #ffffff;
-  color: #374151;
+  background: linear-gradient(135deg, #0b1736, #1e3a8a);
+  color: #ffffff;
   font-size: 12px;
   font-weight: 600;
 }
@@ -330,7 +331,7 @@
 }
 
 .dark .dashboard {
-  background: #020617;
+  background: transparent;
   color: #e2e8f0;
 }
 

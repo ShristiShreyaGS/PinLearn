@@ -2,6 +2,7 @@ import { useState } from "react";
 import "./Auth.css";
 import { useNavigate } from "react-router-dom";
 import { login, storeSession } from "../../../api/user";
+import PageBackdrop from "../PageBackdrop";
 
 function Auth() {
   const navigate = useNavigate();
@@ -117,7 +118,8 @@ function Auth() {
   };
 
   return (
-    <div className="auth-page">
+    <div className="auth-page relative isolate">
+      <PageBackdrop className="pointer-events-none absolute inset-0 z-0 min-h-full" />
 
       {/* LEFT SIDE */}
       <div className="auth-visual">

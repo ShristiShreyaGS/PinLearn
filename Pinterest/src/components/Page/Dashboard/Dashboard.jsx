@@ -3,7 +3,9 @@ import ResourceCard from "../../ResourceCard/ResourceCard";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { fetchRepositories, fetchVideos } from "../../../api/content";
-const VIDEO_CACHE_KEY = "pinlearn_video_cache_v1";
+import { getProfile } from "../../../api/user";
+import PageBackdrop from "../PageBackdrop";
+const VIDEO_CACHE_KEY = "pinlearn_video_cache_v3";
 const VIDEO_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 function readVideoCache() {
   try {
@@ -134,9 +136,8 @@ function Dashboard({
   refreshBoards
 }) {
   const routerData = useLocation();
-  const selectedInterests = useMemo(() => {
-    return routerData.state?.selectedInterests ?? [];
-  }, [routerData.state]);
+  const routeInterests = routerData.state?.selectedInterests ?? [];
+  const [selectedInterests, setSelectedInterests] = useState(routeInterests);
   const [savedResources, setSavedResources] = useState([]);
   const [showCreateBoard, setShowCreateBoard] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
@@ -146,6 +147,27 @@ const [savedMessage,setSavedMessage]=useState("");
 const [boardError, setBoardError] = useState("");
 const [videosByInterest, setVideosByInterest] = useState({});
 const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCurrentInterests = async () => {
+      try {
+        const profile = await getProfile();
+        if (isMounted && Array.isArray(profile.selectedInterests)) {
+          setSelectedInterests(profile.selectedInterests);
+        }
+      } catch (error) {
+        console.error("Failed to load current interests:", error);
+      }
+    };
+
+    loadCurrentInterests();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const allSaved = boards.flatMap((board) => board.resources || []);
@@ -291,16 +313,25 @@ const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
 
     const fetchRepositoriesByInterest = async () => {
       try {
-        const entries = await Promise.all(
+        const results = await Promise.allSettled(
           interestsToRender.map(async (interest) => {
             const repositories = await fetchRepositories(interest);
             return [interest, repositories];
           })
         );
+        const entries = results
+          .filter((result) => result.status === "fulfilled")
+          .map((result) => result.value);
 
         if (isMounted) {
           setRepositoriesByInterest(Object.fromEntries(entries));
         }
+
+        results
+          .filter((result) => result.status === "rejected")
+          .forEach((result) => {
+            console.error("Error fetching GitHub repositories:", result.reason);
+          });
       } catch (error) {
         console.error("Error fetching GitHub repositories:", error);
       }
@@ -356,7 +387,8 @@ const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
 };
 
   return (
-    <div className="dashboard">
+    <div className="dashboard relative isolate">
+      <PageBackdrop className="pointer-events-none absolute inset-0 z-0 min-h-full" />
       <main className="dashboard-content">
 
   <div className="welcome-section">

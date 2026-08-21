@@ -26,6 +26,11 @@ const userSchema = new mongoose.Schema(
     selectedInterests: {
       type: [String],
       default: []
+    },
+
+    kanbanColumns: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null
     }
   },
   {

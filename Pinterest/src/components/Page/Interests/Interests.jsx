@@ -2,6 +2,7 @@ import "./Interests.css";
 import {useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import { signup, storeSession } from "../../../api/user";
+import PageBackdrop from "../PageBackdrop";
 function Interests() {
   const interests = [
     "React",
@@ -60,7 +61,8 @@ function Interests() {
   };
 
   return (
-    <div className="interests-page">
+    <div className="interests-page relative isolate">
+      <PageBackdrop className="pointer-events-none absolute inset-0 z-0 min-h-full" />
 
       <h1>What interests you?</h1>
 

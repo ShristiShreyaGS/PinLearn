@@ -18,7 +18,8 @@ mongoose
   });
   app.use(express.json());
 const PORT = 5000;
-const YOUTUBE_CACHE_TTL_MS = Number(process.env.YOUTUBE_CACHE_TTL_MS || 6 * 60 * 60 * 1000);
+const YOUTUBE_CACHE_TTL_MS = Number(process.env.YOUTUBE_CACHE_TTL_MS||6*60*60*1000);
+const YOUTUBE_CACHE_VERSION = "study-v3";
 const youtubeCache = new Map();
 const inFlightYoutubeRequests = new Map();
 
@@ -26,19 +27,61 @@ function normalizeTopic(topic) {
   return String(topic || "").trim().toLowerCase();
 }
 
+const STUDY_TERMS = [
+  "tutorial",
+  "course",
+  "learn",
+  "lesson",
+  "lecture",
+  "explained",
+  "documentation",
+  "programming",
+  "coding",
+  "development",
+  "project",
+  "guide",
+  "beginner",
+  "advanced",
+  "interview"
+];
+
+const ENTERTAINMENT_TERMS = [
+  "reaction",
+  "reacts",
+  "celebrity",
+  "bollywood",
+  "song",
+  "movie",
+  "trailer",
+  "comedy",
+  "roast",
+  "vlog",
+  "shorts",
+  "meme",
+  "gossip",
+  "short",
+  "viral",
+  "entertainment",
+  "funny",
+  "prank"
+];
+function isStudyVideo(item) {
+  const title = String(item?.snippet?.title || "").toLowerCase();
+  const text = `${title} ${item?.snippet?.description || ""}`.toLowerCase();
+  const hasEntertainmentTerm = ENTERTAINMENT_TERMS.some((term) => text.includes(term));
+  const hasStudyTermInTitle = STUDY_TERMS.some((term) => title.includes(term));
+  return !hasEntertainmentTerm && hasStudyTermInTitle;
+}
 function getCachedVideos(cacheKey) {
   const entry = youtubeCache.get(cacheKey);
   if (!entry) {
     return null;
   }
-
   if (Date.now() > entry.expiresAt) {
     return null;
   }
-
   return entry.data;
 }
-
 function setCachedVideos(cacheKey, data) {
   youtubeCache.set(cacheKey, {
     data,
@@ -62,21 +105,18 @@ app.get("/api/github", async (req, res) => {
         error: "Missing GITHUB_TOKEN"
       });
     }
-
     const url =
       `https://api.github.com/search/repositories` +
       `?q=${encodeURIComponent(topic)}` +
       `&sort=stars` +
       `&order=desc` +
       `&per_page=6`;
-
     const requestOptions = {
       headers: {
         Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
         Accept: "application/vnd.github+json"
       }
     };
-
     let response;
     try {
       response = await fetch(url, requestOptions);
@@ -84,11 +124,9 @@ app.get("/api/github", async (req, res) => {
       if (error?.cause?.code !== "SELF_SIGNED_CERT_IN_CHAIN") {
         throw error;
       }
-
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       response = await fetch(url, requestOptions);
     }
-
     if (!response.ok) {
       const responseText = await response.text();
       console.error("GitHub API error", response.status, responseText);
@@ -117,7 +155,7 @@ app.get("/api/youtube", async (req, res) => {
       });
     }
 
-    const cacheKey = normalizeTopic(topic);
+    const cacheKey = `${YOUTUBE_CACHE_VERSION}:${normalizeTopic(topic)}`;
     const cachedVideos = getCachedVideos(cacheKey);
     if (cachedVideos) {
       res.set("X-Cache", "HIT");
@@ -135,12 +173,13 @@ app.get("/api/youtube", async (req, res) => {
         error: "Missing YOUTUBE_API_KEY"
       });
     }
+    const searchQuery = `${topic} tutorial course programming education`;
     const url =
       `https://www.googleapis.com/youtube/v3/search` +
       `?part=snippet` +
-      `&q=${encodeURIComponent(topic)}` +
+      `&q=${encodeURIComponent(searchQuery)}` +
       `&type=video` +
-      `&maxResults=6` +
+      `&maxResults=20` +
       `&key=${process.env.YOUTUBE_API_KEY}`;
 
     const fetchPromise = (async () => {
@@ -165,7 +204,8 @@ app.get("/api/youtube", async (req, res) => {
       const data = await response.json();
       const items = Array.isArray(data.items) ? data.items : [];
       const videos = items
-        .filter((item) => item?.id?.videoId && item?.snippet)
+        .filter((item) => item?.id?.videoId && item?.snippet && isStudyVideo(item))
+        .slice(0,6)
         .map((item) => ({
           id: item.id.videoId,
           title: item.snippet.title,
@@ -333,6 +373,52 @@ app.patch("/api/profile", authMiddleware, async (req, res) => {
     console.error("Error updating profile:", error);
     res.status(500).json({
       message: "Failed to update profile"
+    });
+  }
+});
+app.get("/api/kanban", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select("kanbanColumns");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    res.json({ columns: user.kanbanColumns });
+  } catch (error) {
+    console.error("Error fetching Kanban board:", error);
+    res.status(500).json({
+      message: "Failed to fetch Kanban board"
+    });
+  }
+});
+app.patch("/api/kanban", authMiddleware, async (req, res) => {
+  try {
+    if (!req.body?.columns || typeof req.body.columns !== "object") {
+      return res.status(400).json({
+        message: "Kanban columns are required"
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { kanbanColumns: req.body.columns },
+      { new: true, runValidators: true }
+    ).select("kanbanColumns");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    res.json({ columns: user.kanbanColumns });
+  } catch (error) {
+    console.error("Error saving Kanban board:", error);
+    res.status(500).json({
+      message: "Failed to save Kanban board"
     });
   }
 });
@@ -656,6 +742,58 @@ app.delete("/api/resources/note", authMiddleware, async (req, res) => {
 
     res.status(500).json({
       message: "Failed to delete note"
+    });
+  }
+});
+app.patch("/api/resources/note", authMiddleware, async (req, res) => {
+  try {
+    const { boardId, resourceId, noteIndex, content } = req.body;
+
+    if (!boardId || !resourceId || !content?.trim()) {
+      return res.status(400).json({
+        message: "Invalid request"
+      });
+    }
+
+    const board = await Board.findOne({
+      _id: boardId,
+      userId: req.userId
+    });
+
+    if (!board) {
+      return res.status(404).json({
+        message: "Board not found"
+      });
+    }
+
+    const resource = board.resources.find(
+      (r) => String(r.id) === String(resourceId)
+    );
+
+    if (!resource) {
+      return res.status(404).json({
+        message: "Resource not found"
+      });
+    }
+
+    if (!Number.isInteger(noteIndex) || !resource.notes[noteIndex]) {
+      return res.status(404).json({
+        message: "Note not found"
+      });
+    }
+
+    resource.notes[noteIndex].content = content.trim();
+    await board.save();
+
+    res.json({
+      message: "Note updated",
+      notes: resource.notes
+    });
+  } catch (error) {
+    console.error("Error updating note:", error);
+
+    res.status(500).json({
+      message: "Failed to update note"
     });
   }
 });
