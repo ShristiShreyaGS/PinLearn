@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams, useSearchParams } from "react-router-dom";
 import Auth from "./components/Page/Auth/Auth";
 import Interests from "./components/Page/Interests/Interests";
 import Dashboard from "./components/Page/Dashboard/Dashboard";
@@ -11,6 +11,16 @@ import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import BoardDetails from "./components/Page/Boards/BoardDetails";
 import ResourceDetails from "./components/Page/Boards/ResourceDetails";
+import Topic from "./components/Page/Topic/Topic";
+import Quiz from "./components/Page/Quiz/Quiz";
+
+function LegacyTopicRedirect() {
+  const { topic } = useParams();
+  const [searchParams] = useSearchParams();
+  const source = searchParams.get("source") === "repository" ? "repositories" : "videos";
+
+  return <Navigate replace to={`/topics/${encodeURIComponent(topic || "")}/${source}`} />;
+}
 
 function App() {
   const mode = useSelector(
@@ -42,6 +52,15 @@ function App() {
         <Route path="/" element={<Auth />} />
         <Route path="/interests" element={<Interests />} />
         <Route
+          path="/quiz"
+          element={
+            <>
+              <Navbar />
+              <Quiz />
+            </>
+          }
+        />
+        <Route
           path="/profile"
           element={
             <>
@@ -64,6 +83,21 @@ function App() {
             </>
           }
         />
+        <Route
+          path="/topics/:topic/:source"
+          element={
+            <>
+              <Navbar />
+              <Topic
+                boards={boards}
+                createBoard={createBoard}
+                saveResourceToBoard={saveResourceToBoard}
+                refreshBoards={refreshBoards}
+              />
+            </>
+          }
+        />
+        <Route path="/topics/:topic" element={<LegacyTopicRedirect />} />
         <Route
           path="/boards"
           element={

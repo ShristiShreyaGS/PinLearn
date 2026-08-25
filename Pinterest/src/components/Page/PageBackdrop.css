@@ -1,7 +1,7 @@
 .page-backdrop {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: -1 !important;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
   min-height: 100vh;
   pointer-events: none;
   background: linear-gradient(135deg, #f4f8ff 0%, #e6f0ff 52%, #f5f2ea 100%);

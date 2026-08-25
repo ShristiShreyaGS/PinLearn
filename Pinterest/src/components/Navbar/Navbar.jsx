@@ -17,6 +17,7 @@ function Navbar() {
 
       <div className="order-3 flex w-full items-center gap-5 overflow-x-auto pb-1 text-sm font-semibold sm:order-none sm:w-auto sm:pb-0">
         <Link to="/dashboard" className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">Home</Link>
+        <Link to="/quiz" className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">Daily Quiz</Link>
         <Link to="/boards" className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">My Boards</Link>
         <Link to="/kanban" className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">Kanban</Link>
         <Link to="/profile" className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">Profile</Link>

@@ -1,0 +1,93 @@
+.topic-page {
+  @apply min-h-screen text-slate-800 relative;
+}
+
+.topic-content {
+  @apply max-w-6xl mx-auto px-4 py-8 md:px-8 md:py-12 relative z-10;
+}
+
+.back-link {
+  @apply mb-8 p-0 border-0 bg-transparent text-slate-600 cursor-pointer font-semibold;
+}
+
+.topic-content h1 {
+  margin: 0;
+  color: #0b1736;
+  font-size: clamp(30px, 4vw, 46px);
+}
+
+.topic-intro {
+  @apply my-2 text-slate-500;
+}
+
+.topic-toolbar {
+  @apply grid gap-2 max-w-xl mb-7;
+}
+
+.topic-toolbar label {
+  @apply text-slate-600 text-xs font-semibold tracking-wider uppercase;
+}
+
+.topic-toolbar input {
+  @apply w-full box-border py-3 px-4 border rounded-xl bg-white text-slate-900;
+}
+
+.content-grid {
+  @apply grid grid-cols-3 gap-4 mt-5;
+}
+
+.content-grid > * {
+  @apply min-w-0;
+}
+
+.topic-status {
+  @apply text-slate-500;
+}
+
+.topic-error {
+  @apply text-red-600;
+}
+
+.topic-pagination {
+  @apply flex items-center justify-center gap-4 mt-8;
+}
+
+.topic-pagination button {
+  @apply px-3 py-2 border rounded-lg bg-white text-slate-700 cursor-pointer font-semibold;
+}
+
+.topic-pagination button:disabled {
+  @apply cursor-not-allowed opacity-50;
+}
+
+.dark .topic-content h1,
+.dark .topic-content h2,
+.dark .topic-content h3 {
+  @apply text-white;
+}
+
+.dark .back-link,
+.dark .topic-intro,
+.dark .topic-status,
+.dark .topic-toolbar label {
+  @apply text-slate-400;
+}
+
+.dark .topic-toolbar input,
+.dark .topic-pagination button {
+  border-color: #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+@media (max-width: 900px) {
+  .content-grid {
+    @apply grid-cols-2;
+  }
+}
+
+@media (max-width: 560px) {
+  .content-grid {
+    @apply grid-cols-1;
+  }
+}

@@ -1,20 +1,25 @@
 import { apiRequest } from "./client";
 
-export async function fetchVideos(topic) {
-  const data = await apiRequest(
-    `/api/youtube?topic=${encodeURIComponent(topic)}`
-  );
+export async function fetchVideoPage(topic, { pageToken = "", search = "" } = {}) {
+  const params = new URLSearchParams({ topic });
+  if (pageToken) params.set("pageToken", pageToken);
+  if (search) params.set("search", search);
+  const data = await apiRequest(`/api/youtube?${params.toString()}`);
 
-  return Array.isArray(data) ? data : [];
+  return {
+    items: Array.isArray(data?.items) ? data.items : [],
+    nextPageToken: data?.nextPageToken || ""
+  };
 }
 
-export async function fetchRepositories(topic) {
-  const data = await apiRequest(
-    `/api/github?topic=${encodeURIComponent(topic)}`
-  );
+export async function fetchVideos(topic) {
+  const page = await fetchVideoPage(topic);
+  return page.items;
+}
 
-  return Array.isArray(data?.items)
-    ? data.items.map((repository) => ({
+function normalizeRepositories(topic, items) {
+  return Array.isArray(items)
+    ? items.map((repository) => ({
         id: `github-${repository.id}`,
         topic,
         type: "Repository",
@@ -25,4 +30,20 @@ export async function fetchRepositories(topic) {
         source: `GitHub | ${Number(repository.stargazers_count || 0).toLocaleString()} stars`
       }))
     : [];
+}
+
+export async function fetchRepositoryPage(topic, { page = 1, search = "" } = {}) {
+  const params = new URLSearchParams({ topic, page: String(page) });
+  if (search) params.set("search", search);
+  const data = await apiRequest(`/api/github?${params.toString()}`);
+
+  return {
+    items: normalizeRepositories(topic, data?.items),
+    hasNextPage: Boolean(data?.has_next_page)
+  };
+}
+
+export async function fetchRepositories(topic) {
+  const page = await fetchRepositoryPage(topic);
+  return page.items;
 }

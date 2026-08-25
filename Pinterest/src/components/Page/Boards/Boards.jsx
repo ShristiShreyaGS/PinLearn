@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { updateResourceStatus } from "../../../api/progress";
+import { markActivity } from "../../../api/streak";
 import { addNote,deleteNote } from "../../../api/notes";
 import {useNavigate} from "react-router-dom";
 import PageBackdrop from "../PageBackdrop";
@@ -273,16 +274,20 @@ function Boards({
                       value={resource.status || "saved"}
                       onChange={async (e) => {
                         try {
+                          const newStatus = e.target.value;
                           const response = await updateResourceStatus(
                             selectedBoard._id,
                             resource.id,
-                            e.target.value
+                            newStatus
                           );
                           updateBoardResource(
                             selectedBoard._id,
                             resource.id,
                             response.resource
                           );
+                          if (newStatus === "completed") {
+                            markActivity().catch(() => {});
+                          }
                         } catch (error) {
                           console.error("Failed to update status:", error);
                         }

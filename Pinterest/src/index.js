@@ -16,12 +16,11 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     
-    <Provider store={store}>  // makes the redux store available.
-        
-  <PersistGate loading={null} persistor={persistor}>
-    <App />
-  </PersistGate>
-</Provider>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <App />
+      </PersistGate>
+    </Provider>
   </React.StrictMode>
 );
 

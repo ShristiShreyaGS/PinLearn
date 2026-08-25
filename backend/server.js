@@ -8,6 +8,7 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 const app = express();
 const Board = require("./models/Boards");
+const QuizCompletion = require("./models/QuizCompletion");
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
@@ -19,9 +20,15 @@ mongoose
   app.use(express.json());
 const PORT = 5000;
 const YOUTUBE_CACHE_TTL_MS = Number(process.env.YOUTUBE_CACHE_TTL_MS||6*60*60*1000);
-const YOUTUBE_CACHE_VERSION = "study-v3";
+const YOUTUBE_CACHE_VERSION = "study-v4";
 const youtubeCache = new Map();
 const inFlightYoutubeRequests = new Map();
+const QUIZ_API_BASE_URL = process.env.QUIZ_API_BASE_URL || "https://quizapi.io/api/v1";
+const QUIZ_TOPIC_ALIASES = {
+  DSA: "data structures algorithms",
+  AI: "artificial intelligence machine learning",
+  DevOps: "devops docker kubernetes"
+};
 
 function normalizeTopic(topic) {
   return String(topic || "").trim().toLowerCase();
@@ -89,11 +96,211 @@ function setCachedVideos(cacheKey, data) {
   });
 }
 
+function quizApiHeaders() {
+  return {
+    Authorization: `Bearer ${process.env.QUIZ_API_KEY}`,
+    Accept: "application/json"
+  };
+}
+
+function normalizeQuizList(data) {
+  const quizzes = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+  return quizzes.map((quiz) => ({
+    id: String(quiz.id),
+    title: quiz.title || "Untitled quiz",
+    description: quiz.description || "",
+    category: quiz.category || "General",
+    difficulty: quiz.difficulty || "mixed",
+    questionsCount: Number(quiz.questions_count || quiz.questionsCount || 0)
+  }));
+}
+
+function normalizeQuestions(data) {
+  const questions = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+  return questions.map((question) => ({
+    id: String(question.id),
+    question: question.question || question.text || "",
+    description: question.description || "",
+    answers: Object.entries(question.answers || {})
+      .filter(([, value]) => value)
+      .map(([key, value]) => ({ key, text: value })),
+    // Normalize correct answers keys from e.g. 'answer_a_correct' -> 'answer_a'
+    correctAnswers: (() => {
+      const raw = question.correct_answers || {};
+      const out = {};
+      for (const [k, v] of Object.entries(raw)) {
+        const match = k.match(/^(answer_[a-zA-Z0-9]+)_correct$/);
+        if (match) {
+          out[match[1]] = v === true || v === "true";
+        }
+      }
+      return out;
+    })()
+  }));
+}
+
+async function fetchQuizApi(path) {
+  if (!process.env.QUIZ_API_KEY) {
+    throw new Error("Missing QUIZ_API_KEY");
+  }
+
+  const response = await fetch(`${QUIZ_API_BASE_URL}${path}`, {
+    headers: quizApiHeaders()
+  });
+
+  if (!response.ok) {
+    const responseText = await response.text();
+    throw new Error(`QuizAPI request failed: ${response.status} ${responseText}`);
+  }
+
+  return response.json();
+}
+
+function activityDate() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: process.env.APP_TIMEZONE || "Asia/Kolkata"
+  }).format(new Date());
+}
+
+function previousDate(date) {
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() - 1);
+  return value.toISOString().slice(0, 10);
+}
+
 //console.log(process.env.YOUTUBE_API_KEY);
 app.use(cors());
+app.get("/api/quizzes", authMiddleware, async (req, res) => {
+  try {
+    const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit || "10", 10)));
+    const topic = String(req.query.topic || "").trim();
+    const search = String(req.query.search || "").trim();
+    const providerTopic = [QUIZ_TOPIC_ALIASES[topic] || topic, search].filter(Boolean).join(" ");
+    const topicQuery = providerTopic ? `&topic=${encodeURIComponent(providerTopic)}` : "";
+    let quizzes = normalizeQuizList(await fetchQuizApi(`/quizzes?limit=${limit}${topicQuery}`));
+
+    if (quizzes.length === 0 && providerTopic) {
+      quizzes = normalizeQuizList(await fetchQuizApi(`/quizzes?limit=${limit}`));
+    }
+
+    res.json({ topic, quizzes });
+  } catch (error) {
+    console.error("Quiz list error:", error);
+    res.status(502).json({ message: "Failed to fetch quizzes" });
+  }
+});
+
+app.get("/api/quizzes/:quizId/questions", authMiddleware, async (req, res) => {
+  try {
+    const quizId = encodeURIComponent(req.params.quizId);
+    const data = await fetchQuizApi(`/questions?quiz_id=${quizId}&include_answers=false`);
+    res.json({ questions: normalizeQuestions(data) });
+  } catch (error) {
+    console.error("Quiz questions error:", error);
+    res.status(502).json({ message: "Failed to fetch quiz questions" });
+  }
+});
+
+app.post("/api/quizzes/:quizId/complete", authMiddleware, async (req, res) => {
+  try {
+    const quizId = String(req.params.quizId);
+    const answers = req.body?.answers && typeof req.body.answers === "object" ? req.body.answers : {};
+    const data = await fetchQuizApi(`/questions?quiz_id=${encodeURIComponent(quizId)}&include_answers=true`);
+    const questions = normalizeQuestions(data);
+    const score = questions.reduce((total, question) => {
+      const selected = answers[question.id];
+      const expected = Object.entries(question.correctAnswers)
+        .filter(([, value]) => value === "true" || value === true)
+        .map(([key]) => key)
+        .sort();
+      const actual = Array.isArray(selected) ? selected.slice().sort() : [selected].filter(Boolean).sort();
+      return expected.length > 0 && JSON.stringify(expected) === JSON.stringify(actual) ? total + 1 : total;
+    }, 0);
+    const date = activityDate();
+    const existing = await QuizCompletion.findOne({ userId: req.userId, activityDate: date });
+
+    if (existing) {
+      return res.json({ completed: false, score, totalQuestions: questions.length, streak: await getStreak(req.userId) });
+    }
+
+    await QuizCompletion.create({
+      userId: req.userId,
+      quizId,
+      title: String(req.body?.title || "Daily Quiz"),
+      topic: String(req.body?.topic || ""),
+      score,
+      totalQuestions: questions.length,
+      activityDate: date
+    });
+
+    res.status(201).json({ completed: true, score, totalQuestions: questions.length, streak: await getStreak(req.userId) });
+  } catch (error) {
+    console.error("Quiz completion error:", error);
+    res.status(502).json({ message: "Failed to complete quiz" });
+  }
+});
+
+app.get("/api/streak", authMiddleware, async (req, res) => {
+  try {
+    res.json(await getStreak(req.userId));
+  } catch (error) {
+    console.error("Streak error:", error);
+    res.status(500).json({ message: "Failed to fetch streak" });
+  }
+});
+
+// mark activity for today (used for non-quiz actions like saving a resource)
+app.post("/api/activity", authMiddleware, async (req, res) => {
+  try {
+    const date = activityDate();
+    // try to create a QuizCompletion record for today if none exists
+    const existing = await QuizCompletion.findOne({ userId: req.userId, activityDate: date });
+    if (!existing) {
+      await QuizCompletion.create({
+        userId: req.userId,
+        quizId: "activity-save",
+        title: String(req.body?.title || "Saved Activity"),
+        topic: String(req.body?.topic || ""),
+        score: 0,
+        totalQuestions: 0,
+        activityDate: date
+      });
+    }
+    res.status(201).json({ streak: await getStreak(req.userId) });
+  } catch (error) {
+    console.error("Activity mark error:", error);
+    res.status(500).json({ message: "Failed to mark activity" });
+  }
+});
+
+async function getStreak(userId) {
+  const completions = await QuizCompletion.find({ userId }).sort({ activityDate: -1 }).select("activityDate");
+  const dates = new Set(completions.map((item) => item.activityDate));
+  let current = 0;
+  let cursor = activityDate();
+  if (!dates.has(cursor)) cursor = previousDate(cursor);
+  while (dates.has(cursor)) {
+    current += 1;
+    cursor = previousDate(cursor);
+  }
+  let longest = 0;
+  for (const date of dates) {
+    let length = 1;
+    let next = previousDate(date);
+    while (dates.has(next)) {
+      length += 1;
+      next = previousDate(next);
+    }
+    longest = Math.max(longest, length);
+  }
+  return { current, longest, activeToday: dates.has(activityDate()) };
+}
 app.get("/api/github", async (req, res) => {
   try {
     const topic = String(req.query.topic || "").trim();
+    const search = String(req.query.search || "").trim();
+    const page = Math.max(1, Number.parseInt(req.query.page || "1", 10));
+    const perPage = 9;
     if (!topic) {
       return res.status(400).json({
         error: "topic is required"
@@ -107,10 +314,11 @@ app.get("/api/github", async (req, res) => {
     }
     const url =
       `https://api.github.com/search/repositories` +
-      `?q=${encodeURIComponent(topic)}` +
+      `?q=${encodeURIComponent(`${topic} ${search}`.trim())}` +
       `&sort=stars` +
       `&order=desc` +
-      `&per_page=6`;
+      `&per_page=${perPage}` +
+      `&page=${page}`;
     const requestOptions = {
       headers: {
         Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
@@ -135,7 +343,10 @@ app.get("/api/github", async (req, res) => {
 
     const data = await response.json();
 
-    res.json(data);
+    res.json({
+      ...data,
+      has_next_page: page * perPage < Number(data.total_count || 0)
+    });
 
   } catch (error) {
     console.error(error);
@@ -148,14 +359,21 @@ app.get("/api/github", async (req, res) => {
 });
 app.get("/api/youtube", async (req, res) => {
   try {
-    const topic = req.query.topic;
+    const topic = String(req.query.topic || "").trim();
+    const search = String(req.query.search || "").trim();
+    const pageToken = String(req.query.pageToken || "").trim();
     if (!topic) {
       return res.status(400).json({
         error: "topic is required"
       });
     }
 
-    const cacheKey = `${YOUTUBE_CACHE_VERSION}:${normalizeTopic(topic)}`;
+    const cacheKey = [
+      YOUTUBE_CACHE_VERSION,
+      normalizeTopic(topic),
+      normalizeTopic(search),
+      pageToken
+    ].join(":");
     const cachedVideos = getCachedVideos(cacheKey);
     if (cachedVideos) {
       res.set("X-Cache", "HIT");
@@ -173,13 +391,14 @@ app.get("/api/youtube", async (req, res) => {
         error: "Missing YOUTUBE_API_KEY"
       });
     }
-    const searchQuery = `${topic} tutorial course programming education`;
+    const searchQuery = `${topic} ${search} tutorial course programming education`.trim();
     const url =
       `https://www.googleapis.com/youtube/v3/search` +
       `?part=snippet` +
       `&q=${encodeURIComponent(searchQuery)}` +
       `&type=video` +
-      `&maxResults=20` +
+      `&maxResults=50` +
+      (pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : "") +
       `&key=${process.env.YOUTUBE_API_KEY}`;
 
     const fetchPromise = (async () => {
@@ -205,7 +424,7 @@ app.get("/api/youtube", async (req, res) => {
       const items = Array.isArray(data.items) ? data.items : [];
       const videos = items
         .filter((item) => item?.id?.videoId && item?.snippet && isStudyVideo(item))
-        .slice(0,6)
+        .slice(0, 9)
         .map((item) => ({
           id: item.id.videoId,
           title: item.snippet.title,
@@ -217,8 +436,13 @@ app.get("/api/youtube", async (req, res) => {
           source: "youtube"
         }));
 
-      setCachedVideos(cacheKey, videos);
-      return videos;
+      const result = {
+        items: videos,
+        nextPageToken: data.nextPageToken || ""
+      };
+
+      setCachedVideos(cacheKey, result);
+      return result;
     })();
 
     inFlightYoutubeRequests.set(cacheKey, fetchPromise);

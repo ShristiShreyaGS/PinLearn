@@ -1,35 +1,33 @@
-import "./Dashboard.css";
-import ResourceCard from "../../ResourceCard/ResourceCard";
-import { useLocation } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
-import { fetchRepositories, fetchVideos } from "../../../api/content";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getProfile } from "../../../api/user";
+import { fetchRepositoryPage, fetchVideoPage } from "../../../api/content";
+import { fetchStreak, markActivity } from "../../../api/streak";
+import StreakCalendar from "../../StreakCalendar/StreakCalendar";
+import ResourceCard from "../../ResourceCard/ResourceCard";
 import PageBackdrop from "../PageBackdrop";
-const VIDEO_CACHE_KEY = "pinlearn_video_cache_v3";
-const VIDEO_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-function readVideoCache() {
-  try {
-    const raw = localStorage.getItem(VIDEO_CACHE_KEY);
-    if (!raw) {
-      return {};
-    }
 
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
+function formatDate(d) {
+  return d.toISOString().slice(0, 10);
 }
 
-function writeVideoCache(cache) {
-  try {
-    localStorage.setItem(VIDEO_CACHE_KEY, JSON.stringify(cache));
-  } catch {
+function generateCalendarFromStreak(streak = {}) {
+  const map = {};
+  const end = new Date();
+  end.setHours(12, 0, 0, 0);
+  for (let i = 0; i < 365; i += 1) {
+    const d = new Date(end);
+    d.setDate(end.getDate() - (364 - i));
+    map[formatDate(d)] = 0;
   }
-}
+  const current = Number(streak.current) || 0;
+  for (let i = 0; i < current; i += 1) {
+    const d = new Date(end);
+    d.setDate(end.getDate() - i);
+    map[formatDate(d)] = 1;
+  }
+  return map;
 
-function resourceKey(resource) {
-  return resource?.id || resource?.url || resource?.title;
 }
 
 const FALLBACK_INTERESTS = [
@@ -44,125 +42,56 @@ const FALLBACK_INTERESTS = [
   "DevOps"
 ];
 
-const RESOURCES = [];
+const HOT_TOPICS = [
+  "TypeScript",
+  "Next.js",
+  "Docker",
+  "Kubernetes",
+  "Cloud Computing",
+  "Cybersecurity",
+  "Machine Learning",
+  "GraphQL"
+];
 
-// const RESOURCES = [
-//   {
-//     id: 1,
-//     topic: "React",
-//     type: "Video",
-//     title: "React Hooks Explained",
-//     description: "Learn the basics of React Hooks.",
-//     image: "https://placehold.co/600x400"
-//   },
-//   {
-//     id: 2,
-//     topic: "React",
-//     type: "Article",
-//     title: "Understanding React Components",
-//     description: "A beginner-friendly guide to React components.",
-//     image: "https://placehold.co/600x400"
-//   },
-//   {
-//     id: 3,
-//     topic: "React",
-//     type: "Repository",
-//     title: "React Projects",
-//     description: "Explore projects built using React.",
-//     image: "https://placehold.co/600x400"
-//   },
-//   {
-//     id: 4,
-//     topic: "React",
-//     type: "Project",
-//     title: "React Dashboard",
-//     description: "A dashboard project built with React.",
-//     image: "https://placehold.co/600x400"
-//   },
-//   {
-//     id: 5,
-//     topic: "AI",
-//     type: "Video",
-//     title: "Introduction to AI",
-//     description: "Understand the basics of Artificial Intelligence.",
-//     image: "https://placehold.co/600x400"
-//   },
-//   {
-//     id: 6,
-//     topic: "AI",
-//     type: "Article",
-//     title: "How AI Works",
-//     description: "An introduction to modern AI concepts.",
-//     image: "https://placehold.co/600x400"
-//   },
-//   {
-//     id: 7,
-//     topic: "AI",
-//     type: "Repository",
-//     title: "Awesome AI Projects",
-//     description: "Explore interesting AI projects.",
-//     image: "https://placehold.co/600x400"
-//   },
-//   {
-//     id: 8,
-//     topic: "Playwright",
-//     type: "Video",
-//     title: "Playwright Basics",
-//     description: "Get started with Playwright testing.",
-//     image: "https://placehold.co/600x400"
-//   },
-//   {
-//     id: 9,
-//     topic: "Playwright",
-//     type: "Article",
-//     title: "Understanding Playwright Fixtures",
-//     description: "Learn about reusable Playwright fixtures.",
-//     image: "https://placehold.co/600x400"
-//   },
-//   {
-//     id: 10,
-//     topic: "Playwright",
-//     type: "Repository",
-//     title: "Playwright Examples",
-//     description: "Explore Playwright automation examples.",
-//     image: "https://placehold.co/600x400"
-//   }
-// ];
+const EXPLORE_TOPIC_BATCH_SIZE = 2;
+
+function resourceKey(resource) {
+  return resource?.id || resource?.url || resource?.title;
+}
 
 function Dashboard({
   boards = [],
   createBoard = async () => {},
-  saveResourceToBoard = async () => {},
-  refreshBoards
+  saveResourceToBoard = async () => {}
 }) {
-  const routerData = useLocation();
-  const routeInterests = routerData.state?.selectedInterests ?? [];
+  const location = useLocation();
+  const navigate = useNavigate();
+  const routeInterests = location.state?.selectedInterests || [];
   const [selectedInterests, setSelectedInterests] = useState(routeInterests);
-  const [savedResources, setSavedResources] = useState([]);
+  const [exploreResources, setExploreResources] = useState([]);
+  const [exploreTopics, setExploreTopics] = useState([]);
+  const [exploreCursors, setExploreCursors] = useState({});
+  const [exploreLoading, setExploreLoading] = useState(false);
+  const exploreLoadingRef = useRef(false);
+  const [exploreError, setExploreError] = useState("");
+  const [resourceToSave, setResourceToSave] = useState(null);
+  const [showBoardSelector, setShowBoardSelector] = useState(false);
   const [showCreateBoard, setShowCreateBoard] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
-  const [showBoardSelector, setShowBoardSelector] = useState(false);
-  const [resourceToSave, setResourceToSave] = useState(null);
-const [savedMessage,setSavedMessage]=useState("");
-const [boardError, setBoardError] = useState("");
-const [videosByInterest, setVideosByInterest] = useState({});
-const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
+  const [boardError, setBoardError] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
+  const [streak, setStreak] = useState({ current: 0, longest: 0, activeToday: false });
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadCurrentInterests = async () => {
-      try {
-        const profile = await getProfile();
+    getProfile()
+      .then((profile) => {
         if (isMounted && Array.isArray(profile.selectedInterests)) {
           setSelectedInterests(profile.selectedInterests);
         }
-      } catch (error) {
-        console.error("Failed to load current interests:", error);
-      }
-    };
-
-    loadCurrentInterests();
+      })
+      .catch((error) => console.error("Failed to load current interests:", error));
 
     return () => {
       isMounted = false;
@@ -170,438 +99,311 @@ const [repositoriesByInterest, setRepositoriesByInterest] = useState({});
   }, []);
 
   useEffect(() => {
-    const allSaved = boards.flatMap((board) => board.resources || []);
-    const deduped = [];
-    const seen = new Set();
+    fetchStreak()
+      .then(setStreak)
+      .catch((error) => console.error("Failed to load streak:", error));
+  }, []);
 
-    for (const resource of allSaved) {
-      const key = resourceKey(resource);
-      if (!key || seen.has(key)) {
-        continue;
-      }
-      seen.add(key);
-      deduped.push(resource);
+  const interestsToRender = useMemo(
+    () => selectedInterests.length ? selectedInterests : FALLBACK_INTERESTS,
+    [selectedInterests]
+  );
+
+  const availableHotTopics = useMemo(() => {
+    const selected = new Set(interestsToRender.map((interest) => interest.toLowerCase()));
+    return HOT_TOPICS.filter((topic) => !selected.has(topic.toLowerCase()));
+  }, [interestsToRender]);
+
+  const loadExploreBatch = useCallback(async ({ reset = false } = {}) => {
+    if (exploreLoadingRef.current) return;
+
+    const topics = reset
+      ? availableHotTopics.slice(0, EXPLORE_TOPIC_BATCH_SIZE)
+      : [
+          ...exploreTopics,
+          ...availableHotTopics.slice(exploreTopics.length, exploreTopics.length + EXPLORE_TOPIC_BATCH_SIZE)
+        ];
+    const topicsToFetch = topics.filter((topic) => reset || !exploreTopics.includes(topic) || Object.keys(exploreCursors).some((key) => key.startsWith(`${topic}:`)));
+    const requests = [];
+
+    for (const topic of topicsToFetch) {
+      const videoKey = `${topic}:videos`;
+      const repositoryKey = `${topic}:repositories`;
+      const videoCursor = reset && !exploreTopics.includes(topic) ? {} : exploreCursors[videoKey] || {};
+      const repositoryCursor = reset && !exploreTopics.includes(topic) ? {} : exploreCursors[repositoryKey] || {};
+
+      requests.push(
+        fetchVideoPage(topic, { pageToken: videoCursor.nextPageToken || "" }).then((result) => ({
+          key: videoKey,
+          items: result.items,
+          cursor: { nextPageToken: result.nextPageToken }
+        })),
+        fetchRepositoryPage(topic, { page: (repositoryCursor.page || 0) + 1 }).then((result) => ({
+          key: repositoryKey,
+          items: result.items,
+          cursor: { page: (repositoryCursor.page || 0) + 1, hasNextPage: result.hasNextPage }
+        }))
+      );
     }
 
-    setSavedResources(deduped);
-  }, [boards]);
+    if (!requests.length) return;
+    setExploreLoading(true);
+    exploreLoadingRef.current = true;
+    setExploreError("");
+    try {
+      const results = await Promise.all(requests);
+      const newResources = results.flatMap((result) => result.items);
+      setExploreResources((previous) => {
+        const seen = new Set(previous.map(resourceKey));
+        return [...previous, ...newResources.filter((resource) => {
+          const key = resourceKey(resource);
+          if (!key || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })];
+      });
+      setExploreTopics(topics);
+      setExploreCursors((previous) => ({
+        ...(reset ? {} : previous),
+        ...Object.fromEntries(results.map((result) => [result.key, result.cursor]))
+      }));
+    } catch (error) {
+      setExploreError("Explore resources could not be loaded right now.");
+    } finally {
+      exploreLoadingRef.current = false;
+      setExploreLoading(false);
+    }
+  }, [exploreTopics, exploreCursors, availableHotTopics]);
 
   useEffect(() => {
-    if (refreshBoards) {
-      refreshBoards();
-    }
-  }, [refreshBoards]);
+    setExploreResources([]);
+    setExploreTopics([]);
+    setExploreCursors({});
+    loadExploreBatch({ reset: true });
+  }, [availableHotTopics, loadExploreBatch]);
 
-  const showSavedMessage = (message) => {
-    setSavedMessage(message);
-    setTimeout(() => {
-      setSavedMessage("");
-    }, 2500);
+  const canLoadMore = exploreTopics.length < availableHotTopics.length || Object.values(exploreCursors).some((cursor) => cursor.nextPageToken || cursor.hasNextPage);
+
+  const openBoardSelector = (resource) => {
+    setResourceToSave(resource);
+    setShowBoardSelector(true);
+    setShowCreateBoard(false);
+    setBoardError("");
   };
 
-  const createBoardAndSave = async () => {
-    const trimmedBoardName = newBoardName.trim();
-    if (!trimmedBoardName) {
-      return;
+  const showSaved = (message) => {
+    // clear any existing timeout so messages don't overlap or leak after unmount
+    if (savedTimeoutRef.current) {
+      clearTimeout(savedTimeoutRef.current);
     }
+    setSavedMessage(message);
+    savedTimeoutRef.current = setTimeout(() => setSavedMessage(""), 2500);
+  };
 
-    const existingBoard = boards.find(
-      (board) => board.name.toLowerCase() === trimmedBoardName.toLowerCase()
-    );
+  const savedTimeoutRef = useRef(null);
 
-    if (existingBoard) {
-      await saveToBoard(existingBoard._id);
-      setNewBoardName("");
-      setShowCreateBoard(false);
-      return;
-    }
-
-    try {
-      setBoardError("");
-      const newBoard = await createBoard(trimmedBoardName);
-
-      if (resourceToSave) {
-        await saveResourceToBoard(newBoard._id, resourceToSave);
-        showSavedMessage(`Saved to "${trimmedBoardName}"`);
+  useEffect(() => {
+    return () => {
+      if (savedTimeoutRef.current) {
+        clearTimeout(savedTimeoutRef.current);
       }
+    };
+  }, []);
 
-      setNewBoardName("");
-      setShowCreateBoard(false);
+  // optimistic update: mark today as activity so calendar updates immediately
+  const optimisticMarkToday = () => {
+    const today = formatDate(new Date());
+    setStreak((prev) => {
+      const next = { ...prev };
+      next.calendar = { ...(prev.calendar || {}) };
+      next.calendar[today] = (next.calendar[today] || 0) + 1;
+      // if activeToday wasn't set, update current streak and longest
+      if (!prev.activeToday) {
+        next.activeToday = true;
+        next.current = (Number(prev.current) || 0) + 1;
+        next.longest = Math.max(Number(next.longest) || 0, next.current);
+      }
+      return next;
+    });
+  };
+
+  const saveToBoard = async (boardId) => {
+    const board = boards.find((item) => item._id === boardId);
+    if (!board || !resourceToSave) return;
+    if ((board.resources || []).some((resource) => resourceKey(resource) === resourceKey(resourceToSave))) {
+      setShowBoardSelector(false);
+      showSaved(`Already saved to "${board.name}"`);
+      return;
+    }
+    try {
+      await saveResourceToBoard(boardId, resourceToSave);
       setShowBoardSelector(false);
       setResourceToSave(null);
+      showSaved(`Saved to "${board.name}"`);
+      // optimistic update so calendar UI reflects immediate change
+      optimisticMarkToday();
+      // notify backend of activity (creates a persisted record) and refresh streak
+      markActivity().then(() => fetchStreak().then(setStreak)).catch(() => {});
     } catch (error) {
       setBoardError(error.message);
     }
   };
 
-  const interestsToRender = useMemo(() => {
-    return selectedInterests.length
-      ? selectedInterests
-      : FALLBACK_INTERESTS;
-  }, [selectedInterests]);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchVideosByInterest = async () => {
-      try {
-        const now = Date.now();
-        const cache = readVideoCache();
-        const hydrated = {};
-        const interestsToFetch = [];
-
-        for (const interest of interestsToRender) {
-          const cacheEntry = cache[interest];
-          if (
-            cacheEntry &&
-            Array.isArray(cacheEntry.data) &&
-            now - cacheEntry.savedAt < VIDEO_CACHE_TTL_MS
-          ) {
-            hydrated[interest] = cacheEntry.data;
-          } else {
-            interestsToFetch.push(interest);
-          }
-        }
-
-        if (isMounted && Object.keys(hydrated).length > 0) {
-          setVideosByInterest((previous) => ({
-            ...previous,
-            ...hydrated
-          }));
-        }
-
-        if (interestsToFetch.length === 0) {
-          return;
-        }
-
-        const entries = await Promise.all(
-          interestsToFetch.map(async (interest) => {
-            const videos = await fetchVideos(interest);
-            return [interest, videos];
-          })
-        );
-
-        const fetchedVideos = Object.fromEntries(entries);
-        const updatedCache = { ...cache };
-        for (const [interest, videos] of Object.entries(fetchedVideos)) {
-          updatedCache[interest] = {
-            data: videos,
-            savedAt: now
-          };
-        }
-        writeVideoCache(updatedCache);
-
-        if (isMounted) {
-          setVideosByInterest((previous) => ({
-            ...previous,
-            ...fetchedVideos
-          }));
-        }
-      } catch (error) {
-        console.error("Error fetching videos:", error);
-      }
-    };
-
-    fetchVideosByInterest();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [interestsToRender]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchRepositoriesByInterest = async () => {
-      try {
-        const results = await Promise.allSettled(
-          interestsToRender.map(async (interest) => {
-            const repositories = await fetchRepositories(interest);
-            return [interest, repositories];
-          })
-        );
-        const entries = results
-          .filter((result) => result.status === "fulfilled")
-          .map((result) => result.value);
-
-        if (isMounted) {
-          setRepositoriesByInterest(Object.fromEntries(entries));
-        }
-
-        results
-          .filter((result) => result.status === "rejected")
-          .forEach((result) => {
-            console.error("Error fetching GitHub repositories:", result.reason);
-          });
-      } catch (error) {
-        console.error("Error fetching GitHub repositories:", error);
-      }
-    };
-
-    fetchRepositoriesByInterest();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [interestsToRender]);
-
-  const openBoardSelector = (resource) => {
-    setResourceToSave(resource);
-    setShowCreateBoard(false);
-    setNewBoardName("");
-    setBoardError("");
-    setShowBoardSelector(true);
+  const createBoardAndSave = async () => {
+    const name = newBoardName.trim();
+    if (!name || !resourceToSave) return;
+    try {
+      const board = await createBoard(name);
+      await saveResourceToBoard(board._id, resourceToSave);
+      setNewBoardName("");
+      setShowCreateBoard(false);
+      setShowBoardSelector(false);
+      setResourceToSave(null);
+      showSaved(`Saved to "${name}"`);
+      optimisticMarkToday();
+      markActivity().then(() => fetchStreak().then(setStreak)).catch(() => {});
+    } catch (error) {
+      setBoardError(error.message);
+    }
   };
 
-  const saveToBoard = async (boardId) => {
-  const selectedBoard = boards.find(
-    (board) => board._id === boardId
-  );
-
-  if (!selectedBoard || !resourceToSave) {
-    return;
-  }
-
-  const keyToSave = resourceKey(resourceToSave);
-
-  const alreadySaved = (selectedBoard.resources || []).some(
-    (resource) => resourceKey(resource) === keyToSave
-  );
-
-  if (alreadySaved) {
-    setShowBoardSelector(false);
-    setResourceToSave(null);
-    showSavedMessage(`Already saved to "${selectedBoard.name}"`);
-    return;
-  }
-
-  try {
-    setBoardError("");
-    await saveResourceToBoard(boardId, resourceToSave);
-
-    setShowBoardSelector(false);
-    setResourceToSave(null);
-    showSavedMessage(`Saved to "${selectedBoard.name}"`);
-  } catch (error) {
-    setBoardError(error.message);
-  }
-};
+  const openTopic = (interest, source) => {
+    navigate(`/topics/${encodeURIComponent(interest)}/${source}`);
+  };
 
   return (
-    <div className="dashboard relative isolate">
+    <div className="relative isolate min-h-screen text-slate-800 dark:text-slate-200">
       <PageBackdrop className="pointer-events-none absolute inset-0 z-0 min-h-full" />
-      <main className="dashboard-content">
+      <main className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="max-w-3xl">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+            Your personalized feed
+          </p>
+          <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+            Choose something interesting to explore.
+          </h1>
+          <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-400">
+            Pick a video library or repository library for any of your selected topics.
+          </p>
+        </div>
 
-  <div className="welcome-section">
-
-    <p className="small-heading">
-      YOUR PERSONALIZED FEED
-    </p>
-
-    <h1>
-      Learn something interesting today.
-    </h1>
-
-    <p>
-      A collection of things worth exploring,
-      based on what you're into.
-    </p>
-
-  </div>
-
-
-        <div className="interest-pills">
-
-          {selectedInterests.map((interest) => (
-            <span key={interest}>
+        <div className="mt-6 flex flex-wrap gap-2" aria-label="Selected interests">
+          {interestsToRender.map((interest) => (
+            <span
+              className="rounded-full bg-gradient-to-r from-[#0b1736] to-[#1e3a8a] px-4 py-2 text-xs font-semibold text-white shadow-sm"
+              key={interest}
+            >
               {interest}
             </span>
           ))}
-
         </div>
-        {interestsToRender.map((interest) => {
 
-          const interestResources = RESOURCES.filter(
-            (resource) => resource.topic === interest
-          );
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Learning streak</p>
+              <p className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">{streak.current} day{streak.current === 1 ? "" : "s"}</p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Complete one quiz each day to keep it alive.</p>
+            </div>
+            <div className="flex-1 min-w-0">
+              <StreakCalendar
+                activityMap={streak.calendar || generateCalendarFromStreak(streak)}
+                onClickDay={() => navigate("/quiz")}
+              />
+            </div>
+            <div className="text-right">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Best streak</p>
+              <p className="mt-1 text-xl font-bold text-slate-950 dark:text-white">{streak.longest} days</p>
+              <button className="mt-3 rounded-full bg-gradient-to-r from-[#0b1736] to-[#1e3a8a] px-4 py-2 text-sm font-bold text-white transition hover:opacity-90" type="button" onClick={() => navigate("/quiz")}>Take today&apos;s quiz</button>
+            </div>
+          </div>
+        </section>
 
-          const interestVideos = videosByInterest[interest] || [];
-
-          const articles = interestResources.filter(
-            (resource) => resource.type === "Article"
-          );
-
-          const repositories = interestResources.filter(
-            (resource) => resource.type === "Repository"
-          );
-          const githubRepositories = repositoriesByInterest[interest] || [];
-
-          const projects = interestResources.filter(
-            (resource) => resource.type === "Project"
-          );
-          return (
+        <div className="mt-10 space-y-9">
+          {interestsToRender.map((interest) => (
             <section key={interest}>
-
-              <div className="section-heading">
-                <h2>{interest}</h2>
-                <button>See all</button>
+              <h2 className="mb-3 text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">
+                {interest}
+              </h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <button
+                  className="group grid min-h-[142px] gap-2 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-[0_6px_18px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-1 hover:border-blue-500 hover:shadow-[0_14px_30px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-400"
+                  type="button"
+                  onClick={() => openTopic(interest, "videos")}
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600 dark:text-blue-400">
+                    {interest} Videos
+                  </span>
+                  <strong className="text-xl font-bold text-slate-950 dark:text-white">Video library</strong>
+                  
+                </button>
+                <button
+                  className="group grid min-h-[142px] gap-2 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-[0_6px_18px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-1 hover:border-blue-500 hover:shadow-[0_14px_30px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-400"
+                  type="button"
+                  onClick={() => openTopic(interest, "repositories")}
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600 dark:text-blue-400">
+                    {interest} Repositories
+                  </span>
+                  <strong className="text-xl font-bold text-slate-950 dark:text-white">Repository library</strong>
+                 
+                </button>
               </div>
-
-              {interestVideos.length > 0 && (
-                <>
-                  <h3>Videos</h3>
-
-                  <div className="content-grid">
-
-                    {interestVideos.map((video) => (
-                      <ResourceCard
-                        key={video.id}
-                        resource={video}
-                        onSave={openBoardSelector}
-                        isSaved={savedResources.some(
-                          (saved) => saved.id === video.id
-                        )}
-                      />
-                    ))}
-
-                  </div>
-                </>
-              )}
-
-              {articles.length > 0 && (
-                <>
-                  <h3>Articles</h3>
-
-                  <div className="content-grid">
-
-                    {articles.map((resource) => (
-                      <ResourceCard
-                        key={resource.id}
-                        resource={resource}
-                        onSave={openBoardSelector}
-                        isSaved={savedResources.some(
-                          (saved) => saved.id === resource.id
-                        )}
-                      />
-                    ))}
-
-                  </div>
-                </>
-              )}
-
-              {(githubRepositories.length > 0 || repositories.length > 0) && (
-                <>
-                  <h3>Repositories</h3>
-
-                  <div className="content-grid">
-
-                    {[...githubRepositories, ...repositories].map((resource) => (
-                      <ResourceCard
-                        key={resource.id}
-                        resource={resource}
-                        onSave={openBoardSelector}
-                        isSaved={savedResources.some(
-                          (saved) => saved.id === resource.id
-                        )}
-                      />
-                    ))}
-
-                  </div>
-                </>
-              )}
-
-              {projects.length > 0 && (
-                <>
-                  <h3>Projects</h3>
-
-                  <div className="content-grid">
-
-                    {projects.map((resource) => (
-                      <ResourceCard
-                        key={resource.id}
-                        resource={resource}
-                        onSave={openBoardSelector}
-                        isSaved={savedResources.some(
-                          (saved) => saved.id === resource.id
-                        )}
-                      />
-                    ))}
-
-                  </div>
-                </>
-              )}
-
             </section>
-          );
-        })}
+          ))}
+        </div>
+
+        <section className="mt-16 border-t border-slate-200 pt-10 dark:border-slate-800">
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">Explore</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">Hot topics worth discovering</h2>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">A mixed stream of videos and repositories beyond your selected topics.</p>
+            </div>
+          </div>
+
+          {exploreError && <p className="mb-4 text-sm text-red-600">{exploreError}</p>}
+          {exploreResources.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {exploreResources.map((resource) => (
+                <ResourceCard
+                  key={resourceKey(resource)}
+                  resource={resource}
+                  onSave={openBoardSelector}
+                  isSaved={boards.some((board) => (board.resources || []).some((saved) => resourceKey(saved) === resourceKey(resource)))}
+                />
+              ))}
+            </div>
+          )}
+
+          {canLoadMore && (
+            <button
+              className="mx-auto mt-8 block rounded-full bg-gradient-to-r from-[#0b1736] to-[#1e3a8a] px-6 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+              type="button"
+              disabled={exploreLoading}
+              onClick={() => loadExploreBatch()}
+            >
+              {exploreLoading ? "Loading..." : "Load more"}
+            </button>
+          )}
+        </section>
 
         {showBoardSelector && (
-          <div className="board-selector">
-
-            <h3>Save to Board</h3>
-            <button
-            className="close-button"
-            onClick={()=>setShowBoardSelector(false)}
->
-  ×
-</button>
-            <h4>Existing Boards</h4>
-            {boards.length > 0 ? (
-              boards.map((board) => (
-                <button
-                  key={board._id}
-                  onClick={() => saveToBoard(board._id)}
-                >
-                  {board.name}
-                </button>
-
-              ))
-            ) : (
-              <p>No boards yet. Create one to save this resource.</p>
-            )}
-
-            <button onClick={() => setShowCreateBoard(true)}>
-              + Create New Board
-            </button>
-
-            {boardError && (
-              <p className="board-error">{boardError}</p>
-            )}
-
-            {showCreateBoard && (
-              <div className="create-board-form">
-
-                <input
-                  type="text"
-                  placeholder="Enter board name"
-                  value={newBoardName}
-                  autoFocus
-                  onChange={(e) => setNewBoardName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      createBoardAndSave();
-                    }
-                  }}
-                />
-
-                <button onClick={createBoardAndSave}>
-                  Create
-                </button>
-
-              </div>
-              
-            )}
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-4">
+            <div className="relative w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+              <button className="absolute right-4 top-3 text-2xl text-slate-500" type="button" onClick={() => setShowBoardSelector(false)}>×</button>
+              <h3 className="mb-5 text-xl font-bold text-slate-950 dark:text-white">Save to Board</h3>
+              {boards.length > 0 ? boards.map((board) => <button className="mb-2 block w-full rounded-lg bg-slate-100 px-4 py-3 text-left font-semibold text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100" key={board._id} type="button" onClick={() => saveToBoard(board._id)}>{board.name}</button>) : <p className="mb-4 text-sm text-slate-500">No boards yet. Create one to save this resource.</p>}
+              <button className="mt-2 w-full rounded-lg bg-slate-100 px-4 py-3 font-semibold text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100" type="button" onClick={() => setShowCreateBoard(true)}>+ Create New Board</button>
+              {showCreateBoard && <div className="mt-4 flex gap-2"><input className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 dark:border-slate-600 dark:bg-slate-800 dark:text-white" value={newBoardName} autoFocus placeholder="Enter board name" onChange={(event) => setNewBoardName(event.target.value)} /><button className="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white" type="button" onClick={createBoardAndSave}>Create</button></div>}
+              {boardError && <p className="mt-3 text-sm text-red-600">{boardError}</p>}
+            </div>
           </div>
-          
         )}
-        {savedMessage && (
-  <div className="saved-message">
-    ✓ {savedMessage}
-  </div>
-)}
-
+        {savedMessage && <div className="fixed right-4 top-20 z-50 rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg">{savedMessage}</div>}
       </main>
     </div>
   );
-
 }
+
 export default Dashboard;
