@@ -168,7 +168,6 @@ function previousDate(date) {
   return value.toISOString().slice(0, 10);
 }
 
-//console.log(process.env.YOUTUBE_API_KEY);
 app.use(cors());
 app.get("/api/quizzes", authMiddleware, async (req, res) => {
   try {

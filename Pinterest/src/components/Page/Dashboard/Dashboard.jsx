@@ -81,17 +81,36 @@ function Dashboard({
   const [boardError, setBoardError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
   const [streak, setStreak] = useState({ current: 0, longest: 0, activeToday: false });
+  const [profileName, setProfileName] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
     getProfile()
       .then((profile) => {
-        if (isMounted && Array.isArray(profile.selectedInterests)) {
+        if (!isMounted) return;
+        if (Array.isArray(profile.selectedInterests)) {
           setSelectedInterests(profile.selectedInterests);
         }
+        // profile may be the user object; prefer name field when available
+        const nameFromResponse = profile?.name || profile?.user?.name;
+        if (nameFromResponse) {
+          setProfileName(nameFromResponse);
+          try {
+            localStorage.setItem("user", JSON.stringify(profile));
+          } catch (e) {}
+        }
       })
-      .catch((error) => console.error("Failed to load current interests:", error));
+      .catch(() => {
+        // fallback: try reading stored user from localStorage
+        try {
+          const stored = JSON.parse(localStorage.getItem("user") || "null");
+          if (isMounted && stored?.name) setProfileName(stored.name);
+          if (isMounted && Array.isArray(stored?.selectedInterests)) setSelectedInterests(stored.selectedInterests);
+        } catch (error) {
+          console.error("Failed to load current interests:", error);
+        }
+      });
 
     return () => {
       isMounted = false;
@@ -179,8 +198,11 @@ function Dashboard({
     setExploreResources([]);
     setExploreTopics([]);
     setExploreCursors({});
+    // call the loader when available topics change; avoid including the loader
+    // function in deps to prevent it from being re-created and causing loops
     loadExploreBatch({ reset: true });
-  }, [availableHotTopics, loadExploreBatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableHotTopics]);
 
   const canLoadMore = exploreTopics.length < availableHotTopics.length || Object.values(exploreCursors).some((cursor) => cursor.nextPageToken || cursor.hasNextPage);
 
@@ -251,7 +273,7 @@ function Dashboard({
 
   const createBoardAndSave = async () => {
     const name = newBoardName.trim();
-    if (!name || !resourceToSave) return;
+    if (!name||!resourceToSave) return;
     try {
       const board = await createBoard(name);
       await saveResourceToBoard(board._id, resourceToSave);
@@ -276,11 +298,9 @@ function Dashboard({
       <PageBackdrop className="pointer-events-none absolute inset-0 z-0 min-h-full" />
       <main className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="max-w-3xl">
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-            Your personalized feed
-          </p>
+          
           <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-950 dark:text-white sm:text-4xl">
-            Choose something interesting to explore.
+            Hello {profileName ? profileName.split(" ")[0] : "there"}
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-400">
             Pick a video library or repository library for any of your selected topics.
@@ -300,9 +320,9 @@ function Dashboard({
 
         <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="flex items-center justify-between gap-4">
-            <div>
+            <div className="w-52 flex-shrink-0">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Learning streak</p>
-              <p className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">{streak.current} day{streak.current === 1 ? "" : "s"}</p>
+              <p className="mt-1 text-xl font-bold text-slate-950 dark:text-white">{streak.current} day{streak.current === 1 ? "" : "s"}</p>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Complete one quiz each day to keep it alive.</p>
             </div>
             <div className="flex-1 min-w-0">
@@ -311,9 +331,9 @@ function Dashboard({
                 onClickDay={() => navigate("/quiz")}
               />
             </div>
-            <div className="text-right">
+            <div className="w-44 flex-shrink-0 text-right">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Best streak</p>
-              <p className="mt-1 text-xl font-bold text-slate-950 dark:text-white">{streak.longest} days</p>
+              <p className="mt-1 text-lg font-bold text-slate-950 dark:text-white">{streak.longest} days</p>
               <button className="mt-3 rounded-full bg-gradient-to-r from-[#0b1736] to-[#1e3a8a] px-4 py-2 text-sm font-bold text-white transition hover:opacity-90" type="button" onClick={() => navigate("/quiz")}>Take today&apos;s quiz</button>
             </div>
           </div>
