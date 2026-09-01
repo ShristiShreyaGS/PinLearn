@@ -333,8 +333,6 @@ function Dashboard({
                   Take Today's Quiz
                 </button>
               </div>
-
-              {/* Milestone progress fills remaining left-panel space */}
               <div className="mt-5">
                 {(() => {
                   const milestones = [7, 30, 100];

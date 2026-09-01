@@ -917,9 +917,21 @@ app.post("/api/resources/note", authMiddleware, async (req, res) => {
   try {
     const { boardId, resourceId, content } = req.body;
 
-    if (!boardId || !resourceId || !content?.trim()) {
+    if (!boardId || !resourceId) {
       return res.status(400).json({
-        message: "Invalid request"
+        error: "Missing boardId or resourceId"
+      });
+    }
+
+    if (typeof content !== "string" || !content.trim()) {
+      return res.status(400).json({
+        error: "Note body is required and must be a non-empty string"
+      });
+    }
+
+    if (content.trim().length > 1000) {
+      return res.status(400).json({
+        error: "Note cannot exceed 1000 characters"
       });
     }
 
@@ -1006,9 +1018,21 @@ app.patch("/api/resources/note", authMiddleware, async (req, res) => {
   try {
     const { boardId, resourceId, noteIndex, content } = req.body;
 
-    if (!boardId || !resourceId || !content?.trim()) {
+    if (!boardId || !resourceId) {
       return res.status(400).json({
-        message: "Invalid request"
+        error: "Missing boardId or resourceId"
+      });
+    }
+
+    if (typeof content !== "string" || !content.trim()) {
+      return res.status(400).json({
+        error: "Note body is required and must be a non-empty string"
+      });
+    }
+
+    if (content.trim().length > 1000) {
+      return res.status(400).json({
+        error: "Note cannot exceed 1000 characters"
       });
     }
 
