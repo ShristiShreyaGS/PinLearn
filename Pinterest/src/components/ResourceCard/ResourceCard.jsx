@@ -10,10 +10,12 @@ function ResourceCard({ resource,onSave,isSaved }) {
     <div className="resource-card">
 
       <div className="resource-image">
-        <img
-          src={imageSrc}
-          alt={resource.title}
-        />
+        {imageSrc ? (
+          <img src={imageSrc} alt={resource.title} />
+        ) : (
+          // keep markup minimal when no image is available
+          <div style={{ width: 120, height: 72, background: 'transparent' }} aria-hidden />
+        )}
       </div>
 
       <div className="resource-info">

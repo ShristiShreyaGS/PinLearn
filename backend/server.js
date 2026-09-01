@@ -6,19 +6,31 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 require("dotenv").config();
+const https = require("https");
 const app = express();
 const Board = require("./models/Boards");
 const QuizCompletion = require("./models/QuizCompletion");
+// Validate required environment variables early and fail fast
+const REQUIRED_ENVS = ["MONGODB_URI", "JWT_SECRET"];
+const missing = REQUIRED_ENVS.filter((k) => !process.env[k]);
+if (missing.length) {
+  console.error("Missing required environment variables:", missing.join(", "));
+  process.exit(1);
+}
+
+const MONGODB_URI = process.env.MONGODB_URI;
+
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(MONGODB_URI)
   .then(() => {
     console.log("MongoDB connected");
   })
   .catch((error) => {
     console.error("MongoDB connection failed:", error);
+    process.exit(1);
   });
   app.use(express.json());
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 const YOUTUBE_CACHE_TTL_MS = Number(process.env.YOUTUBE_CACHE_TTL_MS||6*60*60*1000);
 const YOUTUBE_CACHE_VERSION = "study-v4";
 const youtubeCache = new Map();
@@ -168,7 +180,20 @@ function previousDate(date) {
   return value.toISOString().slice(0, 10);
 }
 
-app.use(cors());
+// Configure CORS: allow a comma-separated list in CORS_ORIGINS, default to no restriction for non-browser requests
+const allowedOrigins = (process.env.CORS_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
+const corsOptions = allowedOrigins.length
+  ? {
+      origin: (origin, callback) => {
+        // allow requests with no origin (mobile apps, server-to-server)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+        callback(new Error("Not allowed by CORS"));
+      }
+    }
+  : undefined;
+
+app.use(cors(corsOptions));
 app.get("/api/quizzes", authMiddleware, async (req, res) => {
   try {
     const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit || "10", 10)));
@@ -328,11 +353,16 @@ app.get("/api/github", async (req, res) => {
     try {
       response = await fetch(url, requestOptions);
     } catch (error) {
-      if (error?.cause?.code !== "SELF_SIGNED_CERT_IN_CHAIN") {
+      if (error?.cause?.code === "SELF_SIGNED_CERT_IN_CHAIN") {
+        if (process.env.ALLOW_SELF_SIGNED === "true") {
+          const agent = new https.Agent({ rejectUnauthorized: false });
+          response = await fetch(url, { ...requestOptions, agent });
+        } else {
+          throw error;
+        }
+      } else {
         throw error;
       }
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-      response = await fetch(url, requestOptions);
     }
     if (!response.ok) {
       const responseText = await response.text();
@@ -406,8 +436,12 @@ app.get("/api/youtube", async (req, res) => {
         response = await fetch(url);
       } catch (error) {
         if (error?.cause?.code === "SELF_SIGNED_CERT_IN_CHAIN") {
-          process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-          response = await fetch(url);
+          if (process.env.ALLOW_SELF_SIGNED === "true") {
+            const agent = new https.Agent({ rejectUnauthorized: false });
+            response = await fetch(url, { agent });
+          } else {
+            throw error;
+          }
         } else {
           throw error;
         }
