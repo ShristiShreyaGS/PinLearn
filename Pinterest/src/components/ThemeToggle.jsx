@@ -11,8 +11,8 @@ function ThemeToggle() {
       onClick={() =>dispatch(toggleTheme())}
     >
       {mode === "light"
-        ?"🌙 Dark Mode"
-        :"☀️ Light Mode"}
+        ?"Dark Mode"
+        :"Light Mode"}
     </button>
   );
 }

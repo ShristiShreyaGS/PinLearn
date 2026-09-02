@@ -7,7 +7,7 @@ function Navbar() {
 
   const handleLogout = () => {
     clearSession();
-    navigate("/");
+    window.location.href = "/";
   };
 
   return (

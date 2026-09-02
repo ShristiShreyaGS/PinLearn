@@ -2,7 +2,7 @@ export const API_URL =
   process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 export function authHeaders() {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
 
   if (!token) {
     throw new Error("Please login first.");

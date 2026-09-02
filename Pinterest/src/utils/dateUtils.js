@@ -20,7 +20,6 @@ export function formatDate(dateString) {
         return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
     }
 
-    // Format as "1 Sep 2026"
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const day = date.getDate();
     const month = monthNames[date.getMonth()];

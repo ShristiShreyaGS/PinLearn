@@ -33,14 +33,14 @@ export function updateInterests(selectedInterests) {
 }
 
 export function storeSession(data) {
-  localStorage.setItem("token", data.token);
+  sessionStorage.setItem("token", data.token);
 
   if (data.user) {
-    localStorage.setItem("user", JSON.stringify(data.user));
+    sessionStorage.setItem("user", JSON.stringify(data.user));
   }
 }
 
 export function clearSession() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+  sessionStorage.removeItem("token");
+  sessionStorage.removeItem("user");
 }
