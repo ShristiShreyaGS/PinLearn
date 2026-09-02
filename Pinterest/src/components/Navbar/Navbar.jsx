@@ -1,10 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { clearSession } from "../../api/user";
 import ThemeToggle from "../ThemeToggle";
 
 function Navbar() {
-  const navigate = useNavigate();
-
   const handleLogout = () => {
     clearSession();
     window.location.href = "/";

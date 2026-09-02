@@ -22,11 +22,10 @@ function LegacyTopicRedirect() {
   return <Navigate replace to={`/topics/${encodeURIComponent(topic || "")}/${source}`} />;
 }
 
-function App() {
+function App(){
   const mode = useSelector(
     (state) => state.theme.mode
   );
-
   useEffect(() => {
     document.documentElement.classList.toggle(
       "dark",

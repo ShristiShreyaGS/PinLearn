@@ -203,26 +203,6 @@ function Kanban() {
     setSelectedCardIds([]);
   }
 
-  function toggleSubtask(colId, cardId, subtaskId) {
-    setColumns((prev) => ({
-      ...prev,
-      [colId]: {
-        ...prev[colId],
-        cards: prev[colId].cards.map((card) => {
-          if (card.id !== cardId) return card;
-
-          return {
-            ...card,
-            updatedAt: new Date().toISOString(),
-            subtasks: card.subtasks.map((subtask) =>
-              subtask.id === subtaskId ? { ...subtask, done: !subtask.done } : subtask
-            )
-          };
-        })
-      }
-    }));
-  }
-
   function onDragStart(start) {
     const { draggableId } = start;
     const activeSelection = selectedCardIds.includes(draggableId)
@@ -661,9 +641,6 @@ function Kanban() {
                           const ownerName = card.ownerName || "Unassigned";
                           const firstLabel = card.labels?.[0];
                           const firstLabelColor = firstLabel?.color || "#1e3a8a";
-                          const progressValue = card.subtasks.length
-                            ? (completedCount / card.subtasks.length) * 100
-                            : 0;
 
                           return (
                             <Draggable key={card.id} draggableId={card.id} index={index}>
