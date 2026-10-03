@@ -14,6 +14,8 @@
   margin: 0;
   color: #0b1736;
   font-size: clamp(30px, 4vw, 46px);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
 }
 
 .topic-intro {
@@ -53,7 +55,7 @@
 }
 
 .topic-pagination button {
-  @apply px-3 py-2 border rounded-lg bg-white text-slate-700 cursor-pointer font-semibold;
+  @apply min-h-11 px-4 py-2 border rounded-lg bg-white text-slate-700 cursor-pointer font-semibold;
 }
 
 .topic-pagination button:disabled {
@@ -87,7 +89,32 @@
 }
 
 @media (max-width: 560px) {
+  .topic-content {
+    @apply px-4 py-6;
+  }
+
+  .back-link {
+    @apply mb-6;
+  }
+
+  .topic-toolbar {
+    @apply w-full max-w-none mb-6;
+  }
+
+  .topic-toolbar input {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
   .content-grid {
     @apply grid-cols-1;
+  }
+
+  .topic-pagination {
+    @apply flex-wrap gap-3;
+  }
+
+  .topic-page .resource-actions button {
+    min-height: 44px;
   }
 }

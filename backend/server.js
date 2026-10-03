@@ -219,6 +219,10 @@ const corsOptions = allowedOrigins.length
   : undefined;
 
 app.use(cors(corsOptions));
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok" });
+});
+
 app.get("/api/quizzes", authMiddleware, async (req, res) => {
   try {
     const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit || "10", 10)));
