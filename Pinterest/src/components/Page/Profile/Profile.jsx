@@ -90,7 +90,7 @@ function Profile() {
     try {
       const updatedProfile = await updateProfile(form);
       setProfile(updatedProfile);
-      localStorage.setItem("user", JSON.stringify(updatedProfile));
+      sessionStorage.setItem("user", JSON.stringify(updatedProfile));
       setIsEditing(false);
       setSaveMessage("Profile updated successfully.");
     } catch (error) {

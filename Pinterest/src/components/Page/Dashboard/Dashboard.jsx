@@ -6,11 +6,9 @@ import { fetchStreak, markActivity } from "../../../api/streak";
 import StreakCalendar from "../../StreakCalendar/StreakCalendar";
 import ResourceCard from "../../ResourceCard/ResourceCard";
 import PageBackdrop from "../PageBackdrop";
-
 function formatDate(d) {
   return d.toISOString().slice(0, 10);
 }
-
 function generateCalendarFromStreak(streak = {}) {
   const map = {};
   const end = new Date();
@@ -27,9 +25,7 @@ function generateCalendarFromStreak(streak = {}) {
     map[formatDate(d)] = 1;
   }
   return map;
-
 }
-
 const FALLBACK_INTERESTS = [
   "React",
   "JavaScript",
@@ -41,7 +37,6 @@ const FALLBACK_INTERESTS = [
   "Angular",
   "DevOps"
 ];
-
 const HOT_TOPICS = [
   "TypeScript",
   "Next.js",
@@ -52,13 +47,11 @@ const HOT_TOPICS = [
   "Machine Learning",
   "GraphQL"
 ];
-
 const EXPLORE_TOPIC_BATCH_SIZE = 2;
 
 function resourceKey(resource) {
   return resource?.id || resource?.url || resource?.title;
 }
-
 function Dashboard({
   boards = [],
   createBoard = async () => {},
@@ -82,7 +75,6 @@ function Dashboard({
   const [savedMessage, setSavedMessage] = useState("");
   const [streak, setStreak] = useState({ current: 0, longest: 0, activeToday: false });
   const [profileName, setProfileName] = useState("");
-
   useEffect(() => {
     let isMounted = true;
 
@@ -97,14 +89,14 @@ function Dashboard({
         if (nameFromResponse) {
           setProfileName(nameFromResponse);
           try {
-            localStorage.setItem("user", JSON.stringify(profile));
+            sessionStorage.setItem("user", JSON.stringify(profile));
           } catch (e) {}
         }
       })
       .catch(() => {
-        // fallback: try reading stored user from localStorage
+        // fallback: try reading stored user from sessionStorage
         try {
-          const stored = JSON.parse(localStorage.getItem("user") || "null");
+          const stored = JSON.parse(sessionStorage.getItem("user") || "null");
           if (isMounted && stored?.name) setProfileName(stored.name);
           if (isMounted && Array.isArray(stored?.selectedInterests)) setSelectedInterests(stored.selectedInterests);
         } catch (error) {

@@ -3,6 +3,8 @@ const User = require("./models/User");
 const bcrypt = require("bcrypt");
 const authMiddleware = require("./middleware/authMiddleware");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 require("dotenv").config();
@@ -29,7 +31,30 @@ mongoose
     console.error("MongoDB connection failed:", error);
     process.exit(1);
   });
-  app.use(express.json());
+app.use(helmet());
+// Body size cap guards against oversized-payload denial-of-service
+app.use(express.json({ limit: "100kb" }));
+
+// General abuse/DoS guard on all routes (protects paid third-party API quotas too)
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Too many requests. Please slow down." }
+  })
+);
+
+// Throttle brute-force attempts against auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many attempts. Please try again later." }
+});
+
 const PORT = process.env.PORT || 5000;
 const YOUTUBE_CACHE_TTL_MS = Number(process.env.YOUTUBE_CACHE_TTL_MS||6*60*60*1000);
 const YOUTUBE_CACHE_VERSION = "study-v4";
@@ -319,6 +344,47 @@ async function getStreak(userId) {
   }
   return { current, longest, activeToday: dates.has(activityDate()) };
 }
+
+function requestWithUnverifiedTls(url, options = {}) {
+  return new Promise((resolve, reject) => {
+    const request = https.request(url, {
+      method: options.method || "GET",
+      headers: options.headers,
+      rejectUnauthorized: false
+    }, (response) => {
+      let body = "";
+      response.setEncoding("utf8");
+      response.on("data", (chunk) => {
+        body += chunk;
+      });
+      response.on("end", () => {
+        resolve({
+          ok: response.statusCode >= 200 && response.statusCode < 300,
+          status: response.statusCode,
+          text: async () => body,
+          json: async () => JSON.parse(body)
+        });
+      });
+      response.on("error", reject);
+    });
+
+    request.on("error", reject);
+    if (options.body) request.write(options.body);
+    request.end();
+  });
+}
+
+async function fetchProvider(url, options) {
+  try {
+    return await fetch(url, options);
+  } catch (error) {
+    if (error?.cause?.code !== "SELF_SIGNED_CERT_IN_CHAIN" || process.env.ALLOW_SELF_SIGNED !== "true") {
+      throw error;
+    }
+    return requestWithUnverifiedTls(url, options);
+  }
+}
+
 app.get("/api/github", async (req, res) => {
   try {
     const topic = String(req.query.topic || "").trim();
@@ -346,24 +412,12 @@ app.get("/api/github", async (req, res) => {
     const requestOptions = {
       headers: {
         Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-        Accept: "application/vnd.github+json"
+        Accept: "application/vnd.github+json",
+        "User-Agent": "PinLearn/1.0",
+        "X-GitHub-Api-Version": "2022-11-28"
       }
     };
-    let response;
-    try {
-      response = await fetch(url, requestOptions);
-    } catch (error) {
-      if (error?.cause?.code === "SELF_SIGNED_CERT_IN_CHAIN") {
-        if (process.env.ALLOW_SELF_SIGNED === "true") {
-          const agent = new https.Agent({ rejectUnauthorized: false });
-          response = await fetch(url, { ...requestOptions, agent });
-        } else {
-          throw error;
-        }
-      } else {
-        throw error;
-      }
-    }
+    const response = await fetchProvider(url, requestOptions);
     if (!response.ok) {
       const responseText = await response.text();
       console.error("GitHub API error", response.status, responseText);
@@ -381,8 +435,7 @@ app.get("/api/github", async (req, res) => {
     console.error(error);
 
     res.status(500).json({
-      error: "Failed to fetch GitHub repositories",
-      details: error.message
+      error: "Failed to fetch GitHub repositories"
     });
   }
 });
@@ -431,21 +484,7 @@ app.get("/api/youtube", async (req, res) => {
       `&key=${process.env.YOUTUBE_API_KEY}`;
 
     const fetchPromise = (async () => {
-      let response;
-      try {
-        response = await fetch(url);
-      } catch (error) {
-        if (error?.cause?.code === "SELF_SIGNED_CERT_IN_CHAIN") {
-          if (process.env.ALLOW_SELF_SIGNED === "true") {
-            const agent = new https.Agent({ rejectUnauthorized: false });
-            response = await fetch(url, { agent });
-          } else {
-            throw error;
-          }
-        } else {
-          throw error;
-        }
-      }
+      const response = await fetchProvider(url);
 
       if (!response.ok) {
         const responseText = await response.text();
@@ -492,8 +531,7 @@ app.get("/api/youtube", async (req, res) => {
     console.error(error);
 
     res.status(500).json({
-      error: "Failed to fetch YouTube videos",
-      details: error.message
+      error: "Failed to fetch YouTube videos"
     });
   }
 });
@@ -516,9 +554,23 @@ app.get("/api/profile", authMiddleware, async (req, res) => {
     });
   }
 });
-app.post("/api/signup", async (req, res) => {
+app.post("/api/signup", authLimiter, async (req, res) => {
   try {
-    const { name, email, password, selectedInterests } = req.body;
+    const name = typeof req.body.name === "string" ? req.body.name : "";
+    const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    const password = typeof req.body.password === "string" ? req.body.password : "";
+    const selectedInterests = Array.isArray(req.body.selectedInterests)
+      ? req.body.selectedInterests.filter((interest) => typeof interest === "string")
+      : [];
+
+    const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    if (!EMAIL_REGEX.test(email)) {
+      return res.status(400).json({ message: "A valid email address is required" });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters long" });
+    }
 
     const existingUser = await User.findOne({ email });
 
@@ -529,7 +581,7 @@ app.post("/api/signup", async (req, res) => {
     }
 const hashedPassword=await bcrypt.hash(password,10);
     const user = new User({
-      name: (name || "").trim(),
+      name: name.trim(),
       email,
       password:hashedPassword,
       selectedInterests
@@ -679,9 +731,16 @@ app.patch("/api/kanban", authMiddleware, async (req, res) => {
     });
   }
 });
-app.post("/api/login", async (req, res) => {
+app.post("/api/login", authLimiter, async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    const password = typeof req.body.password === "string" ? req.body.password : "";
+
+    if (!email || !password) {
+      return res.status(401).json({
+        message: "Invalid email or password"
+      });
+    }
 
     const user = await User.findOne({ email });
 
@@ -978,6 +1037,12 @@ app.delete("/api/resources/note", authMiddleware, async (req, res) => {
   try {
     const { boardId, resourceId, noteIndex } = req.body;
 
+    if (!boardId || !resourceId) {
+      return res.status(400).json({
+        message: "Missing boardId or resourceId"
+      });
+    }
+
     const board = await Board.findOne({
       _id: boardId,
       userId: req.userId
@@ -996,6 +1061,12 @@ app.delete("/api/resources/note", authMiddleware, async (req, res) => {
     if (!resource) {
       return res.status(404).json({
         message: "Resource not found"
+      });
+    }
+
+    if (!Number.isInteger(noteIndex) || !resource.notes[noteIndex]) {
+      return res.status(404).json({
+        message: "Note not found"
       });
     }
 
