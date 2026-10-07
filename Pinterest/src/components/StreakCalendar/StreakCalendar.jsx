@@ -73,9 +73,9 @@ export default function StreakCalendar({ activityMap = {}, onClickDay, compact =
   }
 
   const todayKey = formatDate(new Date());
-  const CELL = compact ? 10 : 14;
-  const GAP = compact ? 4 : 6;
-  const LEFT = compact ? 56 : 72; // left column width for weekday labels
+  const MIN_CELL = 11;
+  const GAP = 3;
+  const LEFT = 34; // left column width for weekday labels
   const weeksCount = denseWeeks.length;
   const scrollRef = useRef(null);
 
@@ -86,12 +86,12 @@ export default function StreakCalendar({ activityMap = {}, onClickDay, compact =
   }, [weeksCount]);
 
   // build explicit grid template for precise month label alignment
-  const gridTemplateColumns = `${LEFT}px ${Array(weeksCount).fill(`${CELL}px`).join(' ')}`;
-  const gridTemplateRows = `auto repeat(7, ${CELL}px)`;
+  const gridTemplateColumns = `${LEFT}px repeat(${weeksCount}, minmax(${MIN_CELL}px, 1fr))`;
+  const gridTemplateRows = `auto repeat(7, auto) auto`;
 
   return (
     <div className="overflow-hidden" style={{ width: '100%' }}>
-      <div ref={scrollRef} style={{ overflowX: 'auto', width: '100%', paddingBottom: 2 }}>
+      <div ref={scrollRef} style={{ overflowX: 'auto', width: '100%', paddingBottom: 4 }}>
       <div
         role="table"
         aria-label="Activity calendar"
@@ -101,12 +101,13 @@ export default function StreakCalendar({ activityMap = {}, onClickDay, compact =
           gridTemplateRows,
           columnGap: `${GAP}px`,
           rowGap: `${GAP}px`,
-          alignItems: 'center'
+          alignItems: 'center',
+          minWidth: LEFT + weeksCount * (MIN_CELL + GAP)
         }}
       >
         {/* Month labels row (grid row 1) - placed over exact week columns */}
         {monthLabels.map((m, i) => (
-          <div key={i} style={{ gridColumn: `${m.col}`, gridRow: 1, textAlign: 'left', paddingLeft: 2, whiteSpace: 'nowrap' }} className="text-xs text-slate-500">
+          <div key={i} style={{ gridColumn: `${m.col}`, gridRow: 1, textAlign: 'left', paddingLeft: 2, whiteSpace: 'nowrap' }} className="text-xs font-medium text-slate-500 dark:text-slate-400">
             {m.label}
           </div>
         ))}
@@ -142,10 +143,10 @@ export default function StreakCalendar({ activityMap = {}, onClickDay, compact =
                 style={{
                   gridColumn: col,
                   gridRow: row,
-                  width: CELL,
-                  height: CELL,
+                  width: '100%',
+                  aspectRatio: '1 / 1',
                   background: color,
-                  borderRadius: 4,
+                  borderRadius: 3,
                   boxShadow: isToday ? '0 0 6px rgba(59,130,246,0.18)' : undefined,
                   border: isToday ? `1.5px solid rgba(59,130,246,0.9)` : '1px solid rgba(0,0,0,0.04)'
                 }}
@@ -155,17 +156,17 @@ export default function StreakCalendar({ activityMap = {}, onClickDay, compact =
         )}
 
         {/* Legend spans full width at bottom of grid */}
-        <div style={{ gridColumn: `1 / span ${weeksCount + 1}`, gridRow: 9 }}>
-          <div className="flex items-center gap-3 text-sm text-slate-600">
-            <div className="text-xs font-semibold text-slate-500">Daily Activity</div>
+        <div style={{ gridColumn: `1 / span ${weeksCount + 1}`, gridRow: 9, position: 'sticky', left: 0, marginTop: 10 }}>
+          <div className="flex flex-wrap items-center justify-end gap-3 text-sm text-slate-600">
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Daily Activity</div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-500">Less</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Less</span>
               <div className="flex gap-1 items-center">
                 {COLORS.map((c, i) => (
-                  <div key={i} style={{ background: c }} className="w-4 h-4 rounded-md border" />
+                  <div key={i} style={{ background: c }} className="h-3 w-3 rounded-full" />
                 ))}
               </div>
-              <span className="text-sm text-slate-500">More</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">More</span>
             </div>
           </div>
         </div>
