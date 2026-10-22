@@ -219,10 +219,6 @@ const corsOptions = allowedOrigins.length
   : undefined;
 
 app.use(cors(corsOptions));
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok" });
-});
-
 app.get("/api/quizzes", authMiddleware, async (req, res) => {
   try {
     const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit || "10", 10)));
@@ -416,9 +412,7 @@ app.get("/api/github", async (req, res) => {
     const requestOptions = {
       headers: {
         Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-        Accept: "application/vnd.github+json",
-        "User-Agent": "PinLearn/1.0",
-        "X-GitHub-Api-Version": "2022-11-28"
+        Accept: "application/vnd.github+json"
       }
     };
     const response = await fetchProvider(url, requestOptions);

@@ -2,7 +2,6 @@ import { useState } from "react";
 import "./Auth.css";
 import { useNavigate } from "react-router-dom";
 import { login, storeSession } from "../../../api/user";
-import PageBackdrop from "../PageBackdrop";
 
 function Auth() {
   const navigate = useNavigate();
@@ -118,167 +117,78 @@ function Auth() {
   };
 
   return (
-    <div className="auth-page relative isolate">
-      <PageBackdrop className="pointer-events-none absolute inset-0 z-0 min-h-full" />
-
-      {/* LEFT SIDE */}
-      <div className="auth-visual">
+    <main className="auth-page">
+      <div className="auth-shell">
+        <section className="auth-visual">
+        <div className="visual-header">
+          <a className="brand-lockup" href="/" aria-label="PinLearn home">
+            <span className="brand-mark">P</span><span>PinLearn</span>
+          </a>
+          <span className="brand-motto">LEARN · SAVE · GROW</span>
+        </div>
 
         <div className="visual-overlay">
-          <h2>
-            Discover something worth learning.
-          </h2>
-
-          <p>
-            Find ideas, save resources and build
-            your own learning space.
-          </p>
+          <h2>Discover something <span>worth learning.</span></h2>
+          <p>Find ideas, save resources and build your own learning space — all in one place.</p>
         </div>
 
-        <div className="floating-card card-one">
-          React
+        <div className="learning-preview" aria-hidden="true">
+          <div className="preview-heading"><strong>My learning</strong></div>
+          <div className="preview-row"><span><b>Saved ideas</b><i /></span></div>
+          <div className="preview-row"><span><b>Progress</b><i /></span></div>
+          <div className="preview-progress"><span /></div>
         </div>
 
-        <div className="floating-card card-two">
-          JavaScript
-        </div>
+        <div className="floating-card card-one"><span><b>React</b><small>Build modern UIs</small></span><span className="topic-arrow">›</span></div>
+        <div className="floating-card card-two"><span><b>JavaScript</b><small>Power the web</small></span><span className="topic-arrow">›</span></div>
+        <div className="floating-card card-three"><span><b>AI</b><small>Shape tomorrow</small></span><span className="topic-arrow">›</span></div>
+        <div className="floating-card card-four"><span><b>Playwright</b><small>Test with confidence</small></span><span className="topic-arrow">›</span></div>
 
-        <div className="floating-card card-three">
-          AI
-        </div>
+        <div className="visual-footer"><span />A BRIGHTER YOU. &nbsp; ONE IDEA AT A TIME.</div>
+        </section>
 
-        <div className="floating-card card-four">
-          Playwright
-        </div>
-
-      </div>
-
-      {/* RIGHT SIDE */}
-      <div className="auth-section">
-
+        <section className="auth-section">
         <div className="auth-container">
+          <a className="form-brand" href="/" aria-label="PinLearn home">
+            <span className="brand-mark">P</span><span>PinLearn</span>
+          </a>
+          <h1>{isLogin ? "Welcome back" : "Create your account"}</h1>
+          <p className="form-subtitle">{isLogin ? "Log in to continue your learning journey." : "Start building your own learning space."}</p>
 
-          <h1>PinLearn</h1>
-
-          <p>
-            {isLogin
-              ? "Welcome back"
-              : "Create your account"}
-          </p>
-
-          {/* FORM */}
           {isLogin ? (
             <>
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                maxLength={100}
-                autoComplete="email"
-                onChange={(e) =>
-                  setEmail(e.target.value)
-                }
-              />
-
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                maxLength={50}
-                autoComplete="current-password"
-                onChange={(e) =>
-                  setPassword(e.target.value)
-                }
-              />
+              <label className="auth-input-wrap"><span className="input-symbol" aria-hidden="true">✉</span><input type="email" placeholder="Email" aria-label="Email" value={email} maxLength={100} autoComplete="email" onChange={(e) => setEmail(e.target.value)} /></label>
+              <label className="auth-input-wrap"><input type="password" placeholder="Password" aria-label="Password" value={password} maxLength={50} autoComplete="current-password" onChange={(e) => setPassword(e.target.value)} /></label>
             </>
           ) : (
             <>
-              <input
-                type="text"
-                placeholder="Name"
-                value={name}
-                maxLength={50}
-                autoComplete="name"
-                onChange={(e) =>
-                  setName(e.target.value)
-                }
-              />
-
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                maxLength={100}
-                autoComplete="email"
-                onChange={(e) =>
-                  setEmail(e.target.value)
-                }
-              />
-
-              <input
-                type="password"
-                placeholder="Create password"
-                value={password}
-                maxLength={50}
-                autoComplete="new-password"
-                onChange={(e) =>
-                  setPassword(e.target.value)
-                }
-              />
-
-              <input
-                type="password"
-                placeholder="Confirm password"
-                value={confirmPassword}
-                maxLength={50}
-                autoComplete="new-password"
-                onChange={(e) =>
-                  setConfirmPassword(e.target.value)
-                }
-              />
+              <label className="auth-input-wrap"><span className="input-symbol" aria-hidden="true">●</span><input type="text" placeholder="Name" aria-label="Name" value={name} maxLength={50} autoComplete="name" onChange={(e) => setName(e.target.value)} /></label>
+              <label className="auth-input-wrap"><span className="input-symbol" aria-hidden="true">✉</span><input type="email" placeholder="Email" aria-label="Email" value={email} maxLength={100} autoComplete="email" onChange={(e) => setEmail(e.target.value)} /></label>
+              <label className="auth-input-wrap"><input type="password" placeholder="Create password" aria-label="Create password" value={password} maxLength={50} autoComplete="new-password" onChange={(e) => setPassword(e.target.value)} /></label>
+              <label className="auth-input-wrap"><input type="password" placeholder="Confirm password" aria-label="Confirm password" value={confirmPassword} maxLength={50} autoComplete="new-password" onChange={(e) => setConfirmPassword(e.target.value)} /></label>
             </>
           )}
 
-          <button
-            onClick={
-              isLogin
-                ? handleLogin
-                : handleSignup
-            }
-          >
-            {isLogin ? "Log In" : "Sign Up"}
+          <button className="auth-submit" onClick={isLogin ? handleLogin : handleSignup}>
+            <span>{isLogin ? "Log In" : "Sign Up"}</span><span className="submit-arrow" aria-hidden="true">→</span>
           </button>
 
-          {/* SWITCH LOGIN / SIGNUP */}
           <p className="signup-text">
-
-            {isLogin
-              ? "Don't have an account?"
-              : "Already have an account?"}
-
-            <span
-              onClick={() => {
-                setIsLogin(!isLogin);
-
-                // Clear fields when switching
-                setName("");
-                setEmail("");
-                setPassword("");
-                setConfirmPassword("");
-              }}
-            >
-              {isLogin
-                ? " Sign Up"
-                : " Log In"}
-            </span>
-
+            {isLogin ? "Don't have an account?" : "Already have an account?"}
+            <button className="auth-switch" type="button" onClick={() => {
+              setIsLogin(!isLogin);
+              setName("");
+              setEmail("");
+              setPassword("");
+              setConfirmPassword("");
+            }}>
+              {isLogin ? "Sign Up" : "Log In"}
+            </button>
           </p>
-
         </div>
-
+        </section>
       </div>
-
-    </div>
+    </main>
   );
 }
 

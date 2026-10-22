@@ -3,7 +3,6 @@ import { apiRequest } from "./client";
 export function fetchBoards() {
   return apiRequest("/api/boards", { auth: true });
 }
-
 export function createBoardRequest(name) {
   return apiRequest("/api/boards", {
     method: "POST",
