@@ -7,9 +7,7 @@ import StreakCalendar from "../../StreakCalendar/StreakCalendar";
 import ResourceCard from "../../ResourceCard/ResourceCard";
 import PageBackdrop from "../PageBackdrop";
 import TopicChip from "../../TopicChip/TopicChip";
-function formatDate(d) {
-  return d.toISOString().slice(0, 10);
-}
+import { toDateKey as formatDate } from "../../../utils/dateUtils";
 function generateCalendarFromStreak(streak = {}) {
   const map = {};
   const end = new Date();
@@ -20,9 +18,11 @@ function generateCalendarFromStreak(streak = {}) {
     map[formatDate(d)] = 0;
   }
   const current = Number(streak.current) || 0;
+  // a streak that is not active today ended yesterday
+  const offset = streak.activeToday ? 0 : 1;
   for (let i = 0; i < current; i += 1) {
     const d = new Date(end);
-    d.setDate(end.getDate() - i);
+    d.setDate(end.getDate() - offset - i);
     map[formatDate(d)] = 1;
   }
   return map;
@@ -76,6 +76,7 @@ function Dashboard({
   const [savedMessage, setSavedMessage] = useState("");
   const [streak, setStreak] = useState({ current: 0, longest: 0, activeToday: false });
   const [profileName, setProfileName] = useState("");
+  const [memberSince, setMemberSince] = useState(null);
   useEffect(() => {
     let isMounted = true;
 
@@ -87,6 +88,8 @@ function Dashboard({
         }
         // profile may be the user object; prefer name field when available
         const nameFromResponse = profile?.name || profile?.user?.name;
+        const createdAt = profile?.createdAt || profile?.user?.createdAt;
+        if (createdAt) setMemberSince(createdAt);
         if (nameFromResponse) {
           setProfileName(nameFromResponse);
           try {
@@ -99,6 +102,7 @@ function Dashboard({
         try {
           const stored = JSON.parse(sessionStorage.getItem("user") || "null");
           if (isMounted && stored?.name) setProfileName(stored.name);
+          if (isMounted && stored?.createdAt) setMemberSince(stored.createdAt);
           if (isMounted && Array.isArray(stored?.selectedInterests)) setSelectedInterests(stored.selectedInterests);
         } catch (error) {
           console.error("Failed to load current interests:", error);
@@ -230,8 +234,8 @@ function Dashboard({
     const today = formatDate(new Date());
     setStreak((prev) => {
       const next = { ...prev };
-      next.calendar = { ...(prev.calendar || {}) };
-      next.calendar[today] = (next.calendar[today] || 0) + 1;
+      next.calendar = { ...(prev.calendar || generateCalendarFromStreak(prev)) };
+      next.calendar[today] = Math.max(1, next.calendar[today] || 0);
       // if activeToday wasn't set, update current streak and longest
       if (!prev.activeToday) {
         next.activeToday = true;
@@ -358,7 +362,7 @@ function Dashboard({
               <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:p-5">
                 <h2 className="text-lg font-bold text-slate-950 dark:text-white">Activity Calendar</h2>
                 <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">Your learning activity over time</p>
-                <StreakCalendar activityMap={streak.calendar || generateCalendarFromStreak(streak)} onClickDay={() => navigate('/quiz')} />
+                <StreakCalendar activityMap={streak.calendar || generateCalendarFromStreak(streak)} startDate={memberSince} onClickDay={() => navigate('/quiz')} />
               </div>
 
               <div className="grid grid-cols-3 gap-3">

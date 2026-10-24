@@ -1,24 +1,16 @@
-import React, { useMemo, useRef, useEffect } from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
+import { toDateKey as formatDate } from "../../utils/dateUtils";
 
-function formatDate(d) {
-  return d.toISOString().slice(0, 10);
-}
+const CELL = 13;
+const GAP = 3;
+const MONTH_GAP = 14;
+const LABEL_WIDTH = 30;
+const DAYS_SHOWN = 365;
+const ROLLING = "recent";
+const SINCE_JOINED = "joined";
 
-function buildYearDates(end = new Date()) {
-  const days = [];
-  const endDate = new Date(end);
-  endDate.setHours(12, 0, 0, 0);
-  const roughStart = new Date(endDate);
-  roughStart.setDate(endDate.getDate() - 364);
-  // align the grid to real calendar weeks (Sunday-start) so week columns
-  // and month boundaries match an actual calendar instead of raw 7-day chunks
-  const startDate = new Date(roughStart);
-  startDate.setDate(roughStart.getDate() - roughStart.getDay());
-  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-    days.push(new Date(d));
-  }
-  return days;
-}
+// color scale per design (level 0 is styled with classes so it adapts to dark mode)
+const COLORS = ["", "#BFDBFE", "#60A5FA", "#2563EB", "#1E3A8A"];
 
 function getLevel(count) {
   if (!count) return 0;
@@ -28,149 +20,223 @@ function getLevel(count) {
   return 1;
 }
 
-// color scale per design (level-0 uses a visible neutral fill)
-const COLORS = ["#E6EEF8", "#BFDBFE", "#60A5FA", "#2563EB", "#1E3A8A"];
+function atNoon(value) {
+  const date = new Date(value);
+  date.setHours(12, 0, 0, 0);
+  return date;
+}
 
-export default function StreakCalendar({ activityMap = {}, onClickDay, compact = false }) {
-  const days = useMemo(() => buildYearDates(), []);
+function parseJoinDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : atNoon(date);
+}
 
-  const items = days.map((d) => {
-    const key = formatDate(d);
-    const count = activityMap[key] || 0;
-    return { date: new Date(d), key, count, level: getLevel(count) };
-  });
+// Resolve the first/last day to show for the selected view. Days before the
+// account was created are never shown.
+function resolveRange(view, joinDate, today) {
+  let start;
+  let end = today;
 
-  // group by week (Sunday-start) so columns are weeks
-  const weeks = [];
-  items.forEach((item) => {
-    const weekIndex = Math.floor((item.date - items[0].date) / (7 * 24 * 60 * 60 * 1000));
-    weeks[weekIndex] = weeks[weekIndex] || [];
-    weeks[weekIndex].push(item);
-  });
-  // compact the array to remove any sparse holes that can cause off-by-one rendering
-  const denseWeeks = weeks.filter(Boolean);
-
-  // compute month labels: render at the first week-column whose month differs
-  // from the previous column's month. Skip if fewer than 3 columns remain.
-  const monthLabels = [];
-  for (let wi = 0; wi < denseWeeks.length; wi++) {
-    const week = denseWeeks[wi];
-    const firstDate = week[0]?.date;
-    if (!firstDate) continue;
-    const month = firstDate.getMonth();
-    const prevWeek = denseWeeks[wi - 1];
-    const prevMonth = prevWeek && prevWeek[0] ? prevWeek[0].date.getMonth() : null;
-    const remaining = denseWeeks.length - wi;
-    // Avoid crowded labels: require a small column gap between labels and skip very-early columns
-    const minGapBetweenLabels = 2;
-    const lastLabelIndex = monthLabels.length ? monthLabels[monthLabels.length - 1].index : -999;
-    const enoughGap = (wi - lastLabelIndex) >= minGapBetweenLabels;
-    const notTooEarly = wi >= 1;
-    // Only show a label when month changes, at least 3 columns remain, and spacing rules pass
-    if (month !== prevMonth && remaining >= 3 && enoughGap && notTooEarly) {
-      monthLabels.push({ label: firstDate.toLocaleString(undefined, { month: 'short' }), col: wi + 2, index: wi });
-    }
+  if (view === SINCE_JOINED) {
+    start = joinDate || new Date(today);
+  } else if (view === ROLLING) {
+    start = new Date(today);
+    start.setDate(today.getDate() - (DAYS_SHOWN - 1));
+  } else {
+    // a calendar year always shows Jan-Dec in full, including upcoming days
+    const year = Number(view);
+    return { start: atNoon(new Date(year, 0, 1)), end: atNoon(new Date(year, 11, 31)) };
   }
 
-  const todayKey = formatDate(new Date());
-  const MIN_CELL = 11;
-  const GAP = 3;
-  const LEFT = 34; // left column width for weekday labels
-  const weeksCount = denseWeeks.length;
+  if (joinDate && start < joinDate) start = joinDate;
+  if (end < start) end = start;
+  return { start, end };
+}
+
+// Split the range into month blocks; each block lays its days out in
+// Sunday-start week columns so months are visually separated.
+function buildMonths(activityMap, start, end, today) {
+  const months = [];
+  const cursor = new Date(start);
+
+  while (cursor <= end) {
+    const date = new Date(cursor);
+    const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+
+    let month = months[months.length - 1];
+    if (!month || month.key !== monthKey) {
+      month = {
+        key: monthKey,
+        label: date.toLocaleString(undefined, { month: "short" }),
+        firstWeekday: date.getDay(),
+        days: []
+      };
+      months.push(month);
+    }
+
+    const key = formatDate(date);
+    const count = activityMap[key] || 0;
+    month.days.push({ date, key, count, level: getLevel(count), isFuture: date > today });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return months.map((month) => ({
+    ...month,
+    columns: Math.ceil((month.firstWeekday + month.days.length) / 7)
+  }));
+}
+
+export default function StreakCalendar({ activityMap = {}, onClickDay, startDate }) {
+  const today = useMemo(() => atNoon(new Date()), []);
+  const joinDate = useMemo(() => {
+    const parsed = parseJoinDate(startDate);
+    return parsed && parsed <= today ? parsed : null;
+  }, [startDate, today]);
+  const currentYear = today.getFullYear();
+  const [view, setView] = useState(String(currentYear));
+
+  const options = useMemo(() => {
+    const joinedYear = joinDate ? joinDate.getFullYear() : currentYear;
+    const list = [];
+    for (let year = currentYear; year >= joinedYear; year -= 1) {
+      list.push({ value: String(year), label: year === currentYear ? `${year} (Current)` : String(year) });
+    }
+
+    // extra period options only appear once the account spans more than one year
+    if (joinedYear < currentYear) {
+      list.push({ value: ROLLING, label: "Last 12 months" });
+      if ((today - joinDate) / 86400000 > DAYS_SHOWN) {
+        list.push({
+          value: SINCE_JOINED,
+          label: `Since joining (${joinDate.toLocaleString(undefined, { month: "short", year: "numeric" })})`
+        });
+      }
+    }
+    return list;
+  }, [joinDate, today, currentYear]);
+
+  const activeView = options.some((option) => option.value === view) ? view : String(currentYear);
+  const { start, end } = useMemo(() => resolveRange(activeView, joinDate, today), [activeView, joinDate, today]);
+  const months = useMemo(() => buildMonths(activityMap, start, end, today), [activityMap, start, end, today]);
+  const totalActivities = useMemo(
+    () => months.reduce((sum, month) => sum + month.days.filter((day) => day.count > 0).length, 0),
+    [months]
+  );
+  const todayKey = formatDate(today);
   const scrollRef = useRef(null);
 
-  // keep the most recent activity (today) in view instead of letting the card clip it
+  // bring today into view for the current period, start from January for past years
   useEffect(() => {
     const node = scrollRef.current;
-    if (node) node.scrollLeft = node.scrollWidth;
-  }, [weeksCount]);
-
-  // build explicit grid template for precise month label alignment
-  const gridTemplateColumns = `${LEFT}px repeat(${weeksCount}, minmax(${MIN_CELL}px, 1fr))`;
-  const gridTemplateRows = `auto repeat(7, auto) auto`;
+    if (!node) return;
+    const todayCell = node.querySelector('[data-today="true"]');
+    if (!todayCell) {
+      node.scrollLeft = 0;
+      return;
+    }
+    const offset = todayCell.getBoundingClientRect().left - node.getBoundingClientRect().left;
+    node.scrollLeft += offset - node.clientWidth / 2;
+  }, [activeView, today]);
 
   return (
-    <div className="overflow-hidden" style={{ width: '100%' }}>
-      <div ref={scrollRef} style={{ overflowX: 'auto', width: '100%', paddingBottom: 4 }}>
-      <div
-        role="table"
-        aria-label="Activity calendar"
-        style={{
-          display: 'grid',
-          gridTemplateColumns,
-          gridTemplateRows,
-          columnGap: `${GAP}px`,
-          rowGap: `${GAP}px`,
-          alignItems: 'center',
-          minWidth: LEFT + weeksCount * (MIN_CELL + GAP)
-        }}
-      >
-        {/* Month labels row (grid row 1) - placed over exact week columns */}
-        {monthLabels.map((m, i) => (
-          <div key={i} style={{ gridColumn: `${m.col}`, gridRow: 1, textAlign: 'left', paddingLeft: 2, whiteSpace: 'nowrap' }} className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            {m.label}
+    <div className="w-full">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="m-0 text-sm font-medium text-slate-600 dark:text-slate-300">
+          <span className="font-bold text-slate-900 dark:text-white">{totalActivities}</span>{" "}
+          active {totalActivities === 1 ? "day" : "days"}
+        </p>
+
+        <select
+          value={activeView}
+          onChange={(event) => setView(event.target.value)}
+          aria-label="Choose calendar period"
+          className="rounded-[8px] border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none transition hover:border-slate-400 focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/15 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div ref={scrollRef} className="overflow-x-auto pb-2">
+        <div className="flex w-max items-start">
+          <div
+            className="no-stagger sticky left-0 z-10 mr-2 grid bg-white pr-1 text-[10px] font-medium text-slate-400 dark:bg-slate-900 dark:text-slate-500"
+            style={{ gridTemplateRows: `repeat(7, ${CELL}px)`, rowGap: GAP }}
+            aria-hidden="true"
+          >
+            <span style={{ gridRow: 2 }} className="leading-[13px]">Mon</span>
+            <span style={{ gridRow: 4 }} className="leading-[13px]">Wed</span>
+            <span style={{ gridRow: 6 }} className="leading-[13px]">Fri</span>
           </div>
-        ))}
 
-        {/* Weekday labels in first column (rows 2..8) */}
-        <div style={{ gridColumn: 1, gridRow: 2 }} />
-        <div style={{ gridColumn: 1, gridRow: 3 }} className="text-xs text-slate-500 text-right">Mon</div>
-        <div style={{ gridColumn: 1, gridRow: 4 }} />
-        <div style={{ gridColumn: 1, gridRow: 5 }} className="text-xs text-slate-500 text-right">Wed</div>
-        <div style={{ gridColumn: 1, gridRow: 6 }} />
-        <div style={{ gridColumn: 1, gridRow: 7 }} className="text-xs text-slate-500 text-right">Fri</div>
-        <div style={{ gridColumn: 1, gridRow: 8 }} />
+          <div role="table" aria-label="Activity calendar" className="flex items-start" style={{ columnGap: MONTH_GAP }}>
+            {months.map((month) => (
+              <div key={month.key} style={{ minWidth: LABEL_WIDTH }}>
+                <div
+                  className="no-stagger grid"
+                  style={{
+                    gridTemplateColumns: `repeat(${month.columns}, ${CELL}px)`,
+                    gridTemplateRows: `repeat(7, ${CELL}px)`,
+                    gap: GAP
+                  }}
+                >
+                  {month.days.map((day, index) => {
+                    const position = month.firstWeekday + index;
+                    const isToday = day.key === todayKey;
+                    const hasActivity = day.level > 0;
 
-        {/* Day cells placed by their week (column) and weekday (row) */}
-        {denseWeeks.map((week, wi) =>
-          (week || []).map((day) => {
-            if (!day || !day.date) return null;
-            const weekday = day.date.getDay(); // 0 = Sun .. 6 = Sat
-            // ensure column index is within grid bounds
-            if (wi < 0 || wi >= weeksCount) return null;
-            const col = wi + 2; // first column is weekday labels
-            const row = weekday + 2; // row 2 = Sunday
-            const isToday = day.key === todayKey;
-            const color = COLORS[day.level] || COLORS[0];
-            return (
-              <button
-                key={day.key}
-                type="button"
-                onClick={() => onClickDay && onClickDay(day)}
-                aria-label={`${day.key}: ${day.count} activity`}
-                title={`${new Date(day.key).toDateString()} — ${day.count} quiz${day.count === 1 ? '' : 'zes'}`}
-                className="transition-shadow duration-150 focus:outline-none"
-                style={{
-                  gridColumn: col,
-                  gridRow: row,
-                  width: '100%',
-                  aspectRatio: '1 / 1',
-                  background: color,
-                  borderRadius: 3,
-                  boxShadow: isToday ? '0 0 6px rgba(59,130,246,0.18)' : undefined,
-                  border: isToday ? `1.5px solid rgba(59,130,246,0.9)` : '1px solid rgba(0,0,0,0.04)'
-                }}
-              />
-            );
-          })
-        )}
+                    return (
+                      <button
+                        key={day.key}
+                        type="button"
+                        data-today={isToday ? "true" : undefined}
+                        disabled={day.isFuture}
+                        onClick={() => onClickDay && onClickDay(day)}
+                        aria-label={`${day.key}: ${day.count} activity`}
+                        title={
+                          day.isFuture
+                            ? day.date.toDateString()
+                            : `${day.date.toDateString()} — ${day.count} ${day.count === 1 ? "activity" : "activities"}`
+                        }
+                        className={`rounded-[3px] transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                          day.isFuture ? "cursor-default" : "hover:scale-125 hover:brightness-95"
+                        } ${
+                          hasActivity ? "" : day.isFuture ? "bg-slate-200/40 dark:bg-slate-700/25" : "bg-slate-200/80 dark:bg-slate-700/60"
+                        } ${isToday ? "ring-2 ring-blue-500/80 ring-offset-1 ring-offset-white dark:ring-offset-slate-900" : ""}`}
+                        style={{
+                          gridColumn: Math.floor(position / 7) + 1,
+                          gridRow: (position % 7) + 1,
+                          backgroundColor: hasActivity ? COLORS[day.level] : undefined
+                        }}
+                      />
+                    );
+                  })}
+                </div>
 
-        {/* Legend spans full width at bottom of grid */}
-        <div style={{ gridColumn: `1 / span ${weeksCount + 1}`, gridRow: 9, position: 'sticky', left: 0, marginTop: 10 }}>
-          <div className="flex flex-wrap items-center justify-end gap-3 text-sm text-slate-600">
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Daily Activity</div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 dark:text-slate-400">Less</span>
-              <div className="flex gap-1 items-center">
-                {COLORS.map((c, i) => (
-                  <div key={i} style={{ background: c }} className="h-3 w-3 rounded-full" />
-                ))}
+                <div className="mt-2 whitespace-nowrap text-xs font-medium text-slate-500 dark:text-slate-400">{month.label}</div>
               </div>
-              <span className="text-xs text-slate-500 dark:text-slate-400">More</span>
-            </div>
+            ))}
           </div>
         </div>
       </div>
+
+      <div className="mt-2 flex flex-wrap items-center justify-end gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <span className="font-semibold">Daily Activity</span>
+        <div className="flex items-center gap-1.5">
+          <span>Less</span>
+          {COLORS.map((color, index) => (
+            <span
+              key={index}
+              className={`h-3 w-3 rounded-[3px] ${color ? "" : "bg-slate-200/80 dark:bg-slate-700/60"}`}
+              style={{ backgroundColor: color || undefined }}
+            />
+          ))}
+          <span>More</span>
+        </div>
       </div>
     </div>
   );

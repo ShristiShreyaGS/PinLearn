@@ -7,7 +7,7 @@ import Kanban from "./components/Page/Kanban/Kanban";
 import Navbar from "./components/Navbar/Navbar";
 import useBoards from "./hooks/useBoards";
 import Profile from "./components/Page/Profile/Profile";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import BoardDetails from "./components/Page/Boards/BoardDetails";
 import ResourceDetails from "./components/Page/Boards/ResourceDetails";
@@ -26,11 +26,21 @@ function App(){
   const mode = useSelector(
     (state) => state.theme.mode
   );
+  const isFirstThemeRender = useRef(true);
   useEffect(() => {
-    document.documentElement.classList.toggle(
-      "dark",
-      mode === "dark"
-    );
+    const root = document.documentElement;
+    let timer;
+
+    if (isFirstThemeRender.current) {
+      isFirstThemeRender.current = false;
+    } else {
+      root.classList.add("theme-transition");
+      timer = window.setTimeout(() => root.classList.remove("theme-transition"), 400);
+    }
+
+    root.classList.toggle("dark", mode === "dark");
+
+    return () => window.clearTimeout(timer);
   }, [mode]);
   const {
     boards,

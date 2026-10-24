@@ -549,6 +549,14 @@ function Kanban() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [editingCard]);
 
+  const detailCard = draftCard ? columns[draftCard.colId]?.cards.find((item) => item.id === draftCard.id) : null;
+  const detailDone = draftCard ? draftCard.subtasks.filter((subtask) => subtask.done).length : 0;
+  const detailTotal = draftCard ? draftCard.subtasks.length : 0;
+  const detailPercent = detailTotal ? Math.round((detailDone / detailTotal) * 100) : 0;
+  const detailFieldClass =
+    "w-full rounded-[8px] border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/15 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:hover:border-slate-600 dark:focus:border-[#1e3a8a]";
+  const detailLabelClass = "mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400";
+
   return (
     <main className="relative isolate min-h-screen bg-transparent px-4 pb-8 pt-[88px] text-[#0b1736] dark:text-slate-100 sm:px-6 lg:px-12 lg:py-12">
       <PageBackdrop className="pointer-events-none absolute inset-0 z-0 min-h-full" />
@@ -582,7 +590,7 @@ function Kanban() {
         )}
 
         <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
-          <div className="grid gap-[18px] lg:grid-cols-3">
+          <div className="grid items-stretch gap-[18px] lg:grid-cols-3">
             {COLUMN_ORDER.map((colId) => {
               const col = columns[colId];
               const meta = COLUMN_META[colId];
@@ -594,27 +602,16 @@ function Kanban() {
               return (
                 <section
                   key={col.id}
-                  className="flex min-w-0 max-h-[70vh] flex-col rounded-[10px] border border-[#dbe3ef] bg-white/85 p-[18px] shadow-[0_16px_32px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-700 dark:bg-slate-900/80"
+                  className="flex min-w-0 flex-col rounded-[8px] border border-[#dbe3ef] bg-slate-100/90 p-2.5 shadow-[0_8px_20px_rgba(15,23,42,0.06)] backdrop-blur dark:border-slate-700 dark:bg-slate-900/80"
                 >
-                  <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-4 dark:border-slate-700">
-                    <div className="flex items-center gap-[11px]">
-                      <span className="grid h-[34px] w-[34px] place-items-center rounded-[6px] bg-gradient-to-br from-[#0b1736] to-[#1e3a8a] text-[11px] font-extrabold text-white shadow-sm">
-                        {meta.marker}
+                  <div className="mb-2 flex items-center gap-2 px-1.5 py-1" title={meta.label}>
+                    <h2 className="m-0 text-xs font-bold uppercase tracking-[0.08em] text-[#0b1736] dark:text-white">{col.title}</h2>
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-300">{col.cards.length}</span>
+                    {col.cards.length > 0 && (
+                      <span className="ml-auto text-[11px] font-medium text-slate-400">
+                        {completedSubtasks} subtasks done
                       </span>
-                      <div>
-                        <h2 className="text-[1.15rem] font-bold text-[#0b1736] dark:text-white">{col.title}</h2>
-                        <p className="mt-[3px] text-xs text-slate-400">{meta.label}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="grid h-[30px] min-w-[30px] place-items-center rounded-[6px] bg-slate-700 px-2.5 text-xs font-extrabold text-white shadow-sm ring-1 ring-slate-300 dark:bg-slate-100 dark:text-slate-800 dark:ring-slate-700">
-                        {col.cards.length}
-                      </span>
-                      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-300">
-                        {completedSubtasks}/{col.cards.length} done
-                      </span>
-                    </div>
+                    )}
                   </div>
 
                   <Droppable droppableId={col.id}>
@@ -622,15 +619,15 @@ function Kanban() {
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`flex min-h-[200px] flex-1 min-h-0 flex-col gap-3 overflow-y-auto rounded-[8px] p-2 transition ${
+                        className={`flex min-h-[80px] flex-1 flex-col gap-2 rounded-[6px] p-1 transition ${
                           snapshot.isDraggingOver
                             ? "border border-dashed border-[#0b1736] bg-[#eef3ff] outline-none dark:border-[#1e3a8a] dark:bg-[#0f172a]"
-                            : "border border-transparent bg-slate-50/60 dark:bg-slate-950/30"
+                            : "border border-transparent"
                         }`}
                       >
                         {col.cards.length === 0 && !snapshot.isDraggingOver && (
-                          <div className="grid min-h-[130px] place-items-center content-center gap-1 rounded-[8px] border border-dashed border-slate-300 bg-white/40 text-slate-400 shadow-inner dark:border-slate-600 dark:bg-slate-900/60">
-                            <span className="text-2xl font-light text-[#1e3a8a]">+</span>
+                          <div className="grid min-h-[70px] place-items-center content-center gap-0.5 rounded-[6px] border border-dashed border-slate-300 bg-white/40 text-slate-400 dark:border-slate-600 dark:bg-slate-900/60">
+                            <span className="text-xl font-light text-[#1e3a8a]">+</span>
                             <p className="m-0 text-xs font-semibold uppercase tracking-[0.12em]">Drop a task here</p>
                           </div>
                         )}
@@ -651,14 +648,16 @@ function Kanban() {
                                     cardRefs.current[card.id] = node;
                                   }}
                                   {...provided.draggableProps}
-                                  className={`relative flex flex-col gap-2 rounded-[8px] border border-slate-200/80 bg-white p-3 shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_28px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-800/90 ${
+                                  {...provided.dragHandleProps}
+                                  aria-label={`Task ${card.title}`}
+                                  className={`group relative flex cursor-grab flex-col gap-2 rounded-[6px] border border-slate-200/70 bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.12)] transition-shadow duration-150 hover:border-[#1e3a8a]/40 hover:shadow-[0_4px_10px_rgba(15,23,42,0.14)] dark:border-slate-700 dark:bg-slate-800/90 ${
                                     isSelected
                                       ? "ring-2 ring-[#0b1736]/35 dark:ring-[#1e3a8a]/50"
                                       : ""
                                   } ${
                                     snapshot.isDragging ? "scale-[1.01] rotate-[0.3deg] opacity-90 shadow-xl" : ""
                                   }`}
-                                  style={{ ...provided.draggableProps.style, borderLeft: `4px solid ${firstLabelColor}` }}
+                                  style={{ ...provided.draggableProps.style, userSelect: "none", WebkitUserSelect: "none" }}
                                 >
                                   {snapshot.isDragging && draggingCardIds.length > 1 && (
                                     <span className="absolute right-2 top-2 inline-flex h-6 min-w-6 items-center justify-center rounded-[6px] bg-[#0b1736] px-1.5 text-[10px] font-bold text-white shadow-sm">
@@ -667,16 +666,6 @@ function Kanban() {
                                   )}
 
                                   <div className="flex items-start gap-2">
-                                    <div
-                                      {...provided.dragHandleProps}
-                                      onClick={(event) => event.stopPropagation()}
-                                      className="mt-0.5 flex h-7 w-7 shrink-0 cursor-grab select-none items-center justify-center rounded-[5px] border border-slate-200 bg-slate-50 text-slate-400 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:bg-slate-600"
-                                      aria-label={`Drag card ${card.title}`}
-                                      style={{ userSelect: "none", WebkitUserSelect: "none", MozUserSelect: "none" }}
-                                    >
-                                      <span className="text-[10px] tracking-[0.2em]">⋮⋮</span>
-                                    </div>
-
                                     <div
                                       className="flex min-w-0 flex-1 cursor-pointer flex-col gap-2"
                                       onClick={(event) => {
@@ -698,27 +687,20 @@ function Kanban() {
                                         }
                                       }}
                                     >
+                                      <h3 className="m-0 line-clamp-3 text-[13px] font-medium leading-[18px] text-slate-800 dark:text-slate-100">
+                                        {card.title}
+                                      </h3>
+
                                       {firstLabel && (
                                         <span
-                                          className="inline-flex w-fit items-center rounded-[4px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]"
+                                          className="inline-flex w-fit max-w-full items-center truncate rounded-[3px] px-1.5 text-[10px] font-bold uppercase leading-4 tracking-[0.04em]"
                                           style={{
-                                            borderColor: `${firstLabelColor}55`,
-                                            backgroundColor: `${firstLabelColor}15`,
+                                            backgroundColor: `${firstLabelColor}1f`,
                                             color: firstLabelColor
                                           }}
                                         >
                                           {firstLabel.name}
                                         </span>
-                                      )}
-
-                                      <h3 className="m-0 line-clamp-2 text-[0.98rem] font-semibold leading-5 text-slate-800 dark:text-slate-100">
-                                        {card.title}
-                                      </h3>
-
-                                      {card.description && (
-                                        <p className="m-0 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-300">
-                                          {card.description}
-                                        </p>
                                       )}
                                     </div>
 
@@ -728,37 +710,37 @@ function Kanban() {
                                         event.stopPropagation();
                                         deleteCard(col.id, card.id);
                                       }}
-                                      className="mt-0.5 rounded-[5px] p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
+                                      className="-mr-1 -mt-0.5 rounded-[4px] px-1 text-base leading-5 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-600 focus:opacity-100 group-hover:opacity-100 dark:hover:bg-red-500/10"
                                       aria-label={`Delete ${card.title}`}
                                     >
                                       ×
                                     </button>
                                   </div>
 
-                                  <div className="mt-1 border-t border-slate-200 pt-3 dark:border-slate-700">
-                                    <div className="flex items-center justify-between gap-3">
-                                      <div className="flex min-w-0 items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                                        <span className="truncate font-medium">{ownerName}</span>
-                                      </div>
-
-                                      <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-400">
-                                        {formatRelativeTime(card.updatedAt || card.createdAt)}
-                                      </span>
-                                    </div>
-
+                                  <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                                     {card.subtasks.length > 0 && (
-                                      <div className="mt-3">
-                                        <div className="mb-1 flex items-center justify-between text-[10px] font-semibold text-slate-500 dark:text-slate-300">
-                                          <span>{completedCount}/{card.subtasks.length}</span>
-                                        </div>
-                                        <div className="h-1.5 w-full overflow-hidden rounded-[3px] bg-slate-200 dark:bg-slate-700">
-                                          <div
-                                            className="h-full rounded-[3px] bg-[#1e3a8a] transition-all duration-200"
-                                            style={{ width: `${(completedCount / card.subtasks.length) * 100}%` }}
-                                          />
-                                        </div>
-                                      </div>
+                                      <span
+                                        className={`inline-flex items-center gap-1 rounded-[3px] px-1.5 py-px font-semibold ${
+                                          completedCount === card.subtasks.length
+                                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                                            : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-200"
+                                        }`}
+                                        title="Subtasks completed"
+                                      >
+                                        ✓ {completedCount}/{card.subtasks.length}
+                                      </span>
                                     )}
+
+                                    <span className="min-w-0 flex-1 truncate">
+                                      {formatRelativeTime(card.updatedAt || card.createdAt)}
+                                    </span>
+
+                                    <span
+                                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#0b1736] to-[#1e3a8a] text-[10px] font-bold uppercase text-white"
+                                      title={ownerName}
+                                    >
+                                      {ownerName.trim().charAt(0) || "?"}
+                                    </span>
                                   </div>
                                 </article>
                               )}
@@ -771,12 +753,12 @@ function Kanban() {
                     )}
                   </Droppable>
 
-                  <div className="mt-auto border-t border-slate-200 pt-4 dark:border-slate-700">
-                    <div className="flex gap-2.5 max-sm:flex-col">
+                  <div className="mt-2 px-1 pb-0.5">
+                    <div className="flex gap-2 max-sm:flex-col">
                       <input
                         type="text"
-                        placeholder="Add a task..."
-                        className="min-w-0 flex-1 rounded-[8px] border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#0b1736] focus:ring-4 focus:ring-[#0b1736]/10 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                        placeholder="+ Add a task..."
+                        className="min-w-0 flex-1 rounded-[6px] border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#0b1736] focus:ring-2 focus:ring-[#0b1736]/10 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                         value={newCardText[colId]}
                         onChange={(event) =>
                           setNewCardText((prev) => ({ ...prev, [colId]: event.target.value }))
@@ -787,7 +769,7 @@ function Kanban() {
                       />
                       <button
                         type="button"
-                        className="rounded-[8px] bg-[#0b1736] px-4 py-2.5 font-bold text-white shadow-[0_8px_18px_rgba(11,23,54,0.2)] transition hover:-translate-y-0.5 hover:bg-[#12214a] max-sm:w-full dark:bg-[#0b1736] dark:hover:bg-[#12214a]"
+                        className="rounded-[6px] bg-[#0b1736] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#12214a] max-sm:w-full dark:bg-[#0b1736] dark:hover:bg-[#12214a]"
                         onClick={() => addCard(colId)}
                       >
                         Add
@@ -804,109 +786,78 @@ function Kanban() {
 
       {editingCard && draftCard && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/55 p-4 pt-20"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4 pt-20 backdrop-blur-sm"
           onClick={closeCardDetail}
           role="presentation"
         >
           <div
             ref={modalRef}
-            className="relative flex max-h-[90vh] w-full max-w-[560px] flex-col overflow-hidden rounded-[10px] border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.22)] dark:border-slate-700 dark:bg-slate-900"
+            className="relative flex max-h-[88vh] w-full max-w-[860px] flex-col overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.35)] dark:border-slate-700 dark:bg-slate-900"
             onClick={(event) => event.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="card-detail-title"
           >
-            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
-              <div>
-                <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Card details</p>
-                <h3 id="card-detail-title" className="text-[2rem] font-semibold leading-none tracking-[-0.05em] text-slate-900 dark:text-white">Edit task</h3>
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-[#0b1736] to-[#1e3a8a] px-6 py-3.5 text-white dark:border-slate-700">
+              <div className="flex items-center gap-2.5">
+                <span className="rounded-[5px] bg-white/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em]">
+                  {columns[draftCard.colId]?.title || "Task"}
+                </span>
+                <h3 id="card-detail-title" className="m-0 text-sm font-semibold tracking-wide text-white/90">
+                  Task details
+                </h3>
               </div>
 
               <button
                 type="button"
                 onClick={closeCardDetail}
-                className="flex h-9 w-9 items-center justify-center rounded-[6px] border border-slate-200 bg-white text-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 dark:focus:ring-slate-600"
+                className="flex h-8 w-8 items-center justify-center rounded-[6px] text-xl text-white/80 transition hover:bg-white/15 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40"
                 aria-label="Close card details"
               >
                 ×
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-              <div className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-[1.1fr_0.9fr]">
-                  <div className="rounded-[6px] bg-slate-50 px-3 py-2.5 dark:bg-slate-800/80">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.17em] text-slate-500 dark:text-slate-400">Progress</p>
-                    <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
-                      {draftCard.subtasks.filter((subtask) => subtask.done).length} of {draftCard.subtasks.length} complete
-                    </p>
+            <div className="grid min-h-0 flex-1 overflow-y-auto md:grid-cols-[minmax(0,1fr)_270px] md:overflow-hidden">
+              <div className="min-h-0 space-y-5 px-6 py-5 md:overflow-y-auto">
+                <label className="block">
+                  <span className={detailLabelClass}>Title</span>
+                  <input
+                    ref={firstFocusableRef}
+                    type="text"
+                    value={draftCard.title}
+                    maxLength={120}
+                    onChange={(event) => setDraftCard((prev) => ({ ...prev, title: event.target.value }))}
+                    className={`${detailFieldClass} !py-2.5 !text-base font-semibold`}
+                  />
+                </label>
+
+                <label className="block">
+                  <span className={detailLabelClass}>Description</span>
+                  <textarea
+                    value={draftCard.description}
+                    rows={4}
+                    placeholder="Add more detail about this task..."
+                    onChange={(event) => setDraftCard((prev) => ({ ...prev, description: event.target.value }))}
+                    className={`${detailFieldClass} resize-none leading-6`}
+                  />
+                </label>
+
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
+                      Subtasks
+                    </span>
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-300">
+                      {detailDone}/{detailTotal} · {detailPercent}%
+                    </span>
                   </div>
 
-                  <div className="rounded-[6px] bg-slate-50 px-3 py-2.5 dark:bg-slate-800/80">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.17em] text-slate-500 dark:text-slate-400">Subtasks</p>
-                    <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
-                      {draftCard.subtasks.length} total
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3.5">
-                  <label className="block">
-                    <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Title</span>
-                    <input
-                      ref={firstFocusableRef}
-                      type="text"
-                      value={draftCard.title}
-                      maxLength={120}
-                      onChange={(event) => setDraftCard((prev) => ({ ...prev, title: event.target.value }))}
-                      className="w-full rounded-[6px] border border-slate-200 bg-slate-50 px-3 py-2.5 text-[15px] text-slate-800 outline-none transition focus:border-slate-300 focus:bg-white focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-slate-500 dark:focus:ring-slate-700/60"
+                  <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#1e3a8a] to-[#1d4ed8] transition-all duration-300"
+                      style={{ width: `${detailPercent}%` }}
                     />
-                  </label>
-
-                  <label className="block">
-                    <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Description</span>
-                    <textarea
-                      value={draftCard.description}
-                      rows={3}
-                      onChange={(event) => setDraftCard((prev) => ({ ...prev, description: event.target.value }))}
-                      className="w-full resize-none rounded-[6px] border border-slate-200 bg-slate-50 px-3 py-2.5 text-[15px] text-slate-800 outline-none transition focus:border-slate-300 focus:bg-white focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-slate-500 dark:focus:ring-slate-700/60"
-                    />
-                  </label>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="block">
-                      <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Owner</span>
-                      <input
-                        type="text"
-                        value={draftCard.ownerName}
-                        onChange={(event) => setDraftCard((prev) => ({ ...prev, ownerName: event.target.value }))}
-                        className="w-full rounded-[6px] border border-slate-200 bg-slate-50 px-3 py-2.5 text-[15px] text-slate-800 outline-none transition focus:border-slate-300 focus:bg-white focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-slate-500 dark:focus:ring-slate-700/60"
-                      />
-                    </label>
-
-                    <label className="block">
-                      <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Labels</span>
-                      <input
-                        type="text"
-                        value={draftCard.labels.join(", ")}
-                        onChange={(event) =>
-                          setDraftCard((prev) => ({
-                            ...prev,
-                            labels: event.target.value
-                              .split(",")
-                              .map((label) => label.trim())
-                              .filter(Boolean)
-                          }))
-                        }
-                        className="w-full rounded-[6px] border border-slate-200 bg-slate-50 px-3 py-2.5 text-[15px] text-slate-800 outline-none transition focus:border-slate-300 focus:bg-white focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-slate-500 dark:focus:ring-slate-700/60"
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-[6px] border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-800/80">
-                  <div className="mb-2.5 flex items-center justify-between gap-3">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Subtasks</p>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -925,26 +876,28 @@ function Kanban() {
                           addDraftSubtask();
                         }
                       }}
-                      placeholder="Add a subtask"
-                      className="min-w-0 flex-1 rounded-[6px] border border-slate-200 bg-white px-3 py-2.5 text-[15px] text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:focus:border-slate-500 dark:focus:ring-slate-700/60"
+                      placeholder="Add a subtask and press Enter"
+                      className={detailFieldClass}
                     />
                     <button
                       type="button"
                       onClick={addDraftSubtask}
-                      className="h-[42px] min-w-[92px] rounded-[6px] bg-[#0b1736] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#12214a] focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600"
+                      className="h-[38px] shrink-0 rounded-[8px] bg-[#0b1736] px-4 text-sm font-semibold text-white transition hover:bg-[#12214a] focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/40"
                     >
                       Add
                     </button>
                   </div>
 
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-3 space-y-1.5">
                     {(draftCard.subtasks || []).length === 0 ? (
-                      <p className="text-sm text-slate-500 dark:text-slate-400">No subtasks yet.</p>
+                      <p className="rounded-[8px] border border-dashed border-slate-300 px-3 py-4 text-center text-sm text-slate-400 dark:border-slate-600">
+                        No subtasks yet.
+                      </p>
                     ) : (
                       (draftCard.subtasks || []).map((subtask, index) => (
                         <div
                           key={subtask.id}
-                          className="flex items-center gap-2 rounded-[6px] border border-slate-200 bg-white px-2.5 py-2 dark:border-slate-700 dark:bg-slate-900"
+                          className="group flex items-center gap-2.5 rounded-[8px] border border-slate-200 bg-slate-50/70 px-3 py-2 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800"
                         >
                           <input
                             type="checkbox"
@@ -955,20 +908,20 @@ function Kanban() {
                           />
 
                           <span
-                            className={`flex-1 text-sm ${
+                            className={`min-w-0 flex-1 break-words text-sm ${
                               subtask.done ? "text-slate-400 line-through" : "text-slate-700 dark:text-slate-200"
                             }`}
                           >
                             {subtask.text}
                           </span>
 
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 opacity-60 transition group-hover:opacity-100">
                             <button
                               type="button"
                               onClick={() => moveDraftSubtask(subtask.id, -1)}
                               disabled={index === 0}
-                              className="rounded-md border border-slate-200 p-1 text-xs text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
-                              aria-label={`Move subtask up`}
+                              className="rounded-[5px] px-1.5 py-0.5 text-xs text-slate-600 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-30 dark:text-slate-300 dark:hover:bg-slate-700"
+                              aria-label="Move subtask up"
                             >
                               ↑
                             </button>
@@ -976,15 +929,15 @@ function Kanban() {
                               type="button"
                               onClick={() => moveDraftSubtask(subtask.id, 1)}
                               disabled={index === (draftCard.subtasks || []).length - 1}
-                              className="rounded-md border border-slate-200 p-1 text-xs text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
-                              aria-label={`Move subtask down`}
+                              className="rounded-[5px] px-1.5 py-0.5 text-xs text-slate-600 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-30 dark:text-slate-300 dark:hover:bg-slate-700"
+                              aria-label="Move subtask down"
                             >
                               ↓
                             </button>
                             <button
                               type="button"
                               onClick={() => removeDraftSubtask(subtask.id)}
-                              className="rounded-md border border-red-200 bg-red-50 p-1 text-xs text-red-600 transition hover:bg-red-100 dark:border-red-700/50 dark:bg-red-500/10 dark:text-red-300"
+                              className="rounded-[5px] px-1.5 py-0.5 text-xs text-red-500 transition hover:bg-red-50 dark:hover:bg-red-500/10"
                               aria-label={`Delete subtask ${subtask.text}`}
                             >
                               ×
@@ -996,20 +949,77 @@ function Kanban() {
                   </div>
                 </div>
               </div>
+
+              <aside className="space-y-5 border-t border-slate-200 bg-slate-50 px-5 py-5 dark:border-slate-700 dark:bg-slate-950/40 md:min-h-0 md:overflow-y-auto md:border-l md:border-t-0">
+                <label className="block">
+                  <span className={detailLabelClass}>Owner</span>
+                  <div className="flex items-center gap-2">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#0b1736] to-[#1e3a8a] text-xs font-bold uppercase text-white">
+                      {draftCard.ownerName.trim().charAt(0) || "?"}
+                    </span>
+                    <input
+                      type="text"
+                      value={draftCard.ownerName}
+                      placeholder="Unassigned"
+                      onChange={(event) => setDraftCard((prev) => ({ ...prev, ownerName: event.target.value }))}
+                      className={detailFieldClass}
+                    />
+                  </div>
+                </label>
+
+                <label className="block">
+                  <span className={detailLabelClass}>Labels</span>
+                  <input
+                    type="text"
+                    value={draftCard.labels.join(", ")}
+                    placeholder="e.g. Design, Urgent"
+                    onChange={(event) =>
+                      setDraftCard((prev) => ({
+                        ...prev,
+                        labels: event.target.value
+                          .split(",")
+                          .map((label) => label.trim())
+                          .filter(Boolean)
+                      }))
+                    }
+                    className={detailFieldClass}
+                  />
+                  <span className="mt-1 block text-[11px] text-slate-400">Separate labels with commas</span>
+                </label>
+
+                <div className="space-y-2 border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                  <div className="flex items-center justify-between">
+                    <span>Status</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">{columns[draftCard.colId]?.title}</span>
+                  </div>
+                  {detailCard?.createdAt && (
+                    <div className="flex items-center justify-between">
+                      <span>Created</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-200">{formatRelativeTime(detailCard.createdAt)}</span>
+                    </div>
+                  )}
+                  {detailCard?.updatedAt && (
+                    <div className="flex items-center justify-between">
+                      <span>Updated</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-200">{formatRelativeTime(detailCard.updatedAt)}</span>
+                    </div>
+                  )}
+                </div>
+              </aside>
             </div>
 
-            <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-200 bg-white px-5 py-4 dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-200 bg-white px-6 py-3.5 dark:border-slate-700 dark:bg-slate-900">
               <button
                 type="button"
                 onClick={closeCardDetail}
-                className="rounded-[6px] border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                className="rounded-[8px] border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={saveCardDetail}
-                className="rounded-[6px] bg-[#0b1736] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(11,23,54,0.22)] transition hover:bg-[#12214a]"
+                className="rounded-[8px] bg-[#0b1736] px-5 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(11,23,54,0.25)] transition hover:bg-[#12214a]"
               >
                 Save changes
               </button>

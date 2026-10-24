@@ -205,6 +205,12 @@ function previousDate(date) {
   return value.toISOString().slice(0, 10);
 }
 
+function nextDate(date) {
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + 1);
+  return value.toISOString().slice(0, 10);
+}
+
 // Configure CORS: allow a comma-separated list in CORS_ORIGINS, default to no restriction for non-browser requests
 const allowedOrigins = (process.env.CORS_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
 const corsOptions = allowedOrigins.length
@@ -305,15 +311,20 @@ app.post("/api/activity", authMiddleware, async (req, res) => {
     // try to create a QuizCompletion record for today if none exists
     const existing = await QuizCompletion.findOne({ userId: req.userId, activityDate: date });
     if (!existing) {
-      await QuizCompletion.create({
-        userId: req.userId,
-        quizId: "activity-save",
-        title: String(req.body?.title || "Saved Activity"),
-        topic: String(req.body?.topic || ""),
-        score: 0,
-        totalQuestions: 0,
-        activityDate: date
-      });
+      try {
+        await QuizCompletion.create({
+          userId: req.userId,
+          quizId: "activity-save",
+          title: String(req.body?.title || "Saved Activity"),
+          topic: String(req.body?.topic || ""),
+          score: 0,
+          totalQuestions: 0,
+          activityDate: date
+        });
+      } catch (createError) {
+        // a concurrent request already recorded today; that is fine
+        if (createError?.code !== 11000) throw createError;
+      }
     }
     res.status(201).json({ streak: await getStreak(req.userId) });
   } catch (error) {
@@ -334,15 +345,20 @@ async function getStreak(userId) {
   }
   let longest = 0;
   for (const date of dates) {
+    // only count runs from their first day to avoid re-walking the same run
+    if (dates.has(previousDate(date))) continue;
     let length = 1;
-    let next = previousDate(date);
+    let next = nextDate(date);
     while (dates.has(next)) {
       length += 1;
-      next = previousDate(next);
+      next = nextDate(next);
     }
     longest = Math.max(longest, length);
   }
-  return { current, longest, activeToday: dates.has(activityDate()) };
+  const calendar = {};
+  for (const date of dates) calendar[date] = 1;
+  const today = activityDate();
+  return { current, longest, activeToday: dates.has(today), today, calendar };
 }
 
 function requestWithUnverifiedTls(url, options = {}) {
@@ -412,7 +428,8 @@ app.get("/api/github", async (req, res) => {
     const requestOptions = {
       headers: {
         Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-        Accept: "application/vnd.github+json"
+        Accept: "application/vnd.github+json",
+        "User-Agent": "PinterestStudyApp"
       }
     };
     const response = await fetchProvider(url, requestOptions);
