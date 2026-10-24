@@ -6,7 +6,7 @@ This repository is configured for a Vercel frontend and a Render API. The app is
 
 1. Push this repository to a Git provider and create a Render Blueprint from it. Render will read `render.yaml` and create the `pinlearn-api` web service.
 2. Set the prompted environment values in Render. `MONGODB_URI` must point to a publicly reachable MongoDB deployment such as MongoDB Atlas, not a database running on your PC. Set `JWT_SECRET`, `GITHUB_TOKEN`, `YOUTUBE_API_KEY`, and `QUIZ_API_KEY` to the existing backend secrets. Never commit those values.
-3. After the service is live, verify `https://<render-service>.onrender.com/api/health` returns `{"status":"ok"}`.
+3. After the service is live, verify `https://<render-service>.onrender.com/api/health` returns `{"status":"ok"}`. `/api/ready` additionally reports whether MongoDB is reachable.
 
 ## 2. Deploy the frontend to Vercel
 
@@ -16,6 +16,6 @@ This repository is configured for a Vercel frontend and a Render API. The app is
 
 ## 3. Restrict API access to the frontend
 
-Set Render's `CORS_ORIGINS` to the exact Vercel production origin, for example `https://pinlearn.vercel.app`. Include any custom domain and any local development origins you still use, separated by commas. Redeploy/restart the API after changing it.
+Set Render's `CORS_ORIGINS` to the exact Vercel production origin, for example `https://pinlearn.vercel.app`. This is required: in production the API rejects browser requests from any origin when it is empty. Include any custom domain and any local development origins you still use, separated by commas. Redeploy/restart the API after changing it.
 
 Once configured, open the Vercel URL from any device with internet access. Both services use HTTPS, and devices do not need to share a Wi-Fi network.

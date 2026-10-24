@@ -58,7 +58,7 @@ function BoardDetails({
                         </h1>
                     </div>
 
-                    <div className="min-w-[190px] rounded-xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                    <div className="w-full rounded-xl sm:w-auto sm:min-w-[190px] border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
                         <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                             <span>Progress</span>
                             <span>{completedResources}/{resources.length}</span>

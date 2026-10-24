@@ -4,6 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { fetchRepositoryPage, fetchVideoPage } from "../../../api/content";
 import ResourceCard from "../../ResourceCard/ResourceCard";
 import PageBackdrop from "../PageBackdrop";
+import { CardGridSkeleton } from "../../ui/Skeleton";
+import { EmptyState, ErrorState } from "../../ui/StateViews";
 
 function resourceKey(resource) {
   return resource?.id || resource?.url || resource?.title;
@@ -160,9 +162,15 @@ function Topic({ boards = [], createBoard = async () => {}, saveResourceToBoard 
           />
         </div>
 
-        {loading && <p className="topic-status">Loading resources...</p>}
-        {error && <p className="topic-status topic-error">{error}</p>}
-        {!loading && !error && resources.length === 0 && <p className="topic-status">No resources found.</p>}
+        {loading && <CardGridSkeleton count={6} label="Loading resources" gridClassName="content-grid" />}
+        {error && <ErrorState title="Couldn't load resources" message={error} />}
+        {!loading && !error && resources.length === 0 && (
+          <EmptyState
+            icon="⌕"
+            title="No resources found"
+            description={search ? `Nothing matched "${search}". Try a different keyword.` : "Try another topic or check back later."}
+          />
+        )}
         {!loading && !error && resources.length > 0 && (
           <div className="content-grid">
             {resources.map((resource) => <ResourceCard key={resource.id} resource={resource} onSave={openBoardSelector} />)}

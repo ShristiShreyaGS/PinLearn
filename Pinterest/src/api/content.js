@@ -4,7 +4,7 @@ export async function fetchVideoPage(topic, { pageToken = "", search = "" } = {}
   const params = new URLSearchParams({ topic });
   if (pageToken) params.set("pageToken", pageToken);
   if (search) params.set("search", search);
-  const data = await apiRequest(`/api/youtube?${params.toString()}`);
+  const data = await apiRequest(`/api/youtube?${params.toString()}`, { auth: true });
 
   return {
     items: Array.isArray(data?.items) ? data.items : [],
@@ -35,7 +35,7 @@ function normalizeRepositories(topic, items) {
 export async function fetchRepositoryPage(topic, { page = 1, search = "" } = {}) {
   const params = new URLSearchParams({ topic, page: String(page) });
   if (search) params.set("search", search);
-  const data = await apiRequest(`/api/github?${params.toString()}`);
+  const data = await apiRequest(`/api/github?${params.toString()}`, { auth: true });
 
   return {
     items: normalizeRepositories(topic, data?.items),

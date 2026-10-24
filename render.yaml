@@ -3,12 +3,18 @@ services:
     name: pinlearn-api
     runtime: node
     rootDir: backend
-    buildCommand: npm install
+    buildCommand: npm ci --omit=dev
     startCommand: node server.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: LOG_LEVEL
+        value: info
+      - key: APP_TIMEZONE
+        value: Asia/Kolkata
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
@@ -19,5 +25,6 @@ services:
         sync: false
       - key: QUIZ_API_KEY
         sync: false
+      # Required in production: the API rejects cross-origin browsers when this is empty.
       - key: CORS_ORIGINS
         sync: false

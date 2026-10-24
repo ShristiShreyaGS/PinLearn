@@ -1,0 +1,32 @@
+services:
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+
+  api:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/pinlearn
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in your shell or a .env file}
+      CORS_ORIGINS: http://localhost:3000
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      QUIZ_API_KEY: ${QUIZ_API_KEY:-}
+    depends_on:
+      - mongo
+
+  web:
+    build:
+      context: ./Pinterest
+      args:
+        REACT_APP_API_URL: http://localhost:5000
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+volumes:
+  mongo-data:

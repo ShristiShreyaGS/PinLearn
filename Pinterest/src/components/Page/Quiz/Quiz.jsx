@@ -3,6 +3,7 @@ import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { fetchQuizQuestions, fetchQuizzes, completeQuiz } from "../../../api/quiz";
 import { getProfile } from "../../../api/user";
 import PageBackdrop from "../PageBackdrop";
+import { CardGridSkeleton } from "../../ui/Skeleton";
 
 const INTEREST_ALIASES = {
   dsa: ["dsa", "data structures", "algorithms"],
@@ -158,7 +159,7 @@ function Quiz() {
   };
 
   if (loading) {
-    return <QuizShell><p className="text-slate-500 dark:text-slate-400">Loading quizzes...</p></QuizShell>;
+    return <QuizShell><CardGridSkeleton count={3} label="Loading quizzes" /></QuizShell>;
   }
 
   if (result) {

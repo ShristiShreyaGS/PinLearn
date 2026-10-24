@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getProfile } from "../../../api/user";
 import { fetchRepositoryPage, fetchVideoPage } from "../../../api/content";
-import { fetchStreak, markActivity } from "../../../api/streak";
+import { fetchStreak } from "../../../api/streak";
 import StreakCalendar from "../../StreakCalendar/StreakCalendar";
 import ResourceCard from "../../ResourceCard/ResourceCard";
 import PageBackdrop from "../PageBackdrop";
@@ -261,8 +261,8 @@ function Dashboard({
       showSaved(`Saved to "${board.name}"`);
       // optimistic update so calendar UI reflects immediate change
       optimisticMarkToday();
-      // notify backend of activity (creates a persisted record) and refresh streak
-      markActivity().then(() => fetchStreak().then(setStreak)).catch(() => {});
+      // the server records the activity when the save succeeds; just refresh the streak
+      fetchStreak().then(setStreak).catch(() => {});
     } catch (error) {
       setBoardError(error.message);
     }
@@ -280,7 +280,7 @@ function Dashboard({
       setResourceToSave(null);
       showSaved(`Saved to "${name}"`);
       optimisticMarkToday();
-      markActivity().then(() => fetchStreak().then(setStreak)).catch(() => {});
+      fetchStreak().then(setStreak).catch(() => {});
     } catch (error) {
       setBoardError(error.message);
     }
@@ -322,7 +322,7 @@ function Dashboard({
           </aside>
         </div>
 
-        <section className="mt-8 grid gap-5 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 sm:p-5 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <section className="mt-8 grid gap-5 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 sm:p-5 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]">
           <div className="flex flex-col gap-4">
             <div className="rounded-2xl bg-gradient-to-br from-[#0b1736] to-[#1e3a8a] p-5 text-white shadow-lg">
               <p className="text-sm font-semibold text-blue-100">Learning streak</p>

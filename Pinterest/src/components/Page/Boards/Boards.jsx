@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { updateResourceStatus } from "../../../api/progress";
-import { markActivity } from "../../../api/streak";
 import { addNote,deleteNote } from "../../../api/notes";
 import {useNavigate} from "react-router-dom";
 import PageBackdrop from "../PageBackdrop";
+import { CardGridSkeleton, PageHeaderSkeleton } from "../../ui/Skeleton";
+import { EmptyState } from "../../ui/StateViews";
 
 function Boards({
   boards = [],
@@ -81,8 +82,8 @@ function Boards({
     return (
       <div className="relative isolate min-h-screen bg-transparent mx-auto max-w-7xl px-4 py-8 pb-12 sm:px-6 lg:px-10">
         <PageBackdrop className="pointer-events-none absolute inset-0 z-0 min-h-full" />
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">My Boards</h2>
-        <p className="mt-2 text-slate-500 dark:text-slate-400">Loading boards...</p>
+        <PageHeaderSkeleton />
+        <CardGridSkeleton count={6} label="Loading boards" />
       </div>
     );
   }
@@ -102,26 +103,34 @@ function Boards({
       </div>
 
       {(error || formError) && (
-        <div className="my-5 rounded-[14px] border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 px-[18px] py-3.5 font-medium text-red-700 dark:text-red-200">
+        <div role="alert" className="my-5 rounded-[14px] border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 px-[18px] py-3.5 font-medium text-red-700 dark:text-red-200">
           {error || formError}
         </div>
       )}
 
       {/* Create Board Popup */}
       {showCreateBoard && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/55 dark:bg-black/70 p-4 backdrop-blur-[8px]">
-          <div className="relative w-[min(450px,92vw)] rounded-3xl bg-white dark:bg-slate-900 bg-opacity-95 p-6 shadow-[0_20px_40px_rgba(15,23,42,0.18),0_30px_80px_rgba(15,23,42,0.12)] sm:p-[30px]">
+        <div
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/55 dark:bg-black/70 p-4 backdrop-blur-[8px]"
+          onKeyDown={(e) => e.key === "Escape" && setShowCreateBoard(false)}
+          onMouseDown={(e) => e.target === e.currentTarget && setShowCreateBoard(false)}
+        >
+          <div role="dialog" aria-modal="true" aria-labelledby="create-board-title" className="relative w-[min(450px,92vw)] rounded-3xl bg-white dark:bg-slate-900 bg-opacity-95 p-6 shadow-[0_20px_40px_rgba(15,23,42,0.18),0_30px_80px_rgba(15,23,42,0.12)] sm:p-[30px]">
             <button
+              type="button"
+              aria-label="Close dialog"
               className="absolute right-4 top-3 cursor-pointer border-0 bg-transparent text-[28px] text-slate-500 transition hover:text-red-500"
               onClick={() => setShowCreateBoard(false)}
             >
               ×
             </button>
 
-            <h2 className="mb-5 text-2xl font-bold text-slate-900 dark:text-white">Create New Board</h2>
+            <h2 id="create-board-title" className="mb-5 text-2xl font-bold text-slate-900 dark:text-white">Create New Board</h2>
 
             <input
               type="text"
+              aria-label="Board name"
+              maxLength={80}
               placeholder="Enter board name"
               value={newBoardName}
               autoFocus
@@ -147,17 +156,14 @@ function Boards({
 
       {/* Boards List */}
       {boards.length === 0 ? (
-        <div className="mt-[60px] p-10 text-center bg-slate-50 dark:bg-slate-900 rounded-lg">
-          <h2 className="mb-2.5 text-2xl font-bold text-slate-900 dark:text-white">No boards yet</h2>
-          <p className="mb-6 text-slate-500 dark:text-slate-400">Create your first board to start saving resources.</p>
-
-          <button
-            className="cursor-pointer rounded-full border-0 bg-gradient-to-br from-[#0b1736] to-[#1e3a8a] px-6 py-3 text-[15px] font-semibold text-white shadow-[0_8px_20px_rgba(11,23,54,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(11,23,54,0.3)] max-sm:w-full"
-            onClick={() => setShowCreateBoard(true)}
-          >
-            + Create Board
-          </button>
-        </div>
+        <EmptyState
+          className="mt-10"
+          icon="▦"
+          title="No boards yet"
+          description="Boards group the videos and repositories you want to learn from. Create your first one to start saving."
+          actionLabel="+ Create Board"
+          onAction={() => setShowCreateBoard(true)}
+        />
       ) : (
         <div className="mt-6 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] items-stretch gap-[22px]">
           {boards.map((board) => {
@@ -285,9 +291,6 @@ function Boards({
                             resource.id,
                             response.resource
                           );
-                          if (newStatus === "completed") {
-                            markActivity().catch(() => {});
-                          }
                         } catch (error) {
                           console.error("Failed to update status:", error);
                         }

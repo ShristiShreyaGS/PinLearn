@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PinLearn: Project Transformation Report</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm 16mm;
+    @bottom-center { content: counter(page); font: 9pt "Segoe UI", sans-serif; color: #64748b; }
+    @top-right { content: "PinLearn · Transformation Report"; font: 8pt "Segoe UI", sans-serif; color: #94a3b8; }
+  }
+  @page :first { margin: 0; @bottom-center { content: none; } @top-right { content: none; } }
+
+  :root {
+    --navy: #0b1736; --blue: #1e3a8a; --accent: #2563eb; --ink: #0f172a; --muted: #475569;
+    --line: #e2e8f0; --soft: #f8fafc; --green: #047857; --red: #b91c1c; --amber: #b45309;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font: 10pt/1.5 "Segoe UI", system-ui, sans-serif; color: var(--ink); }
+  h1, h2, h3, h4 { color: var(--navy); line-height: 1.2; break-after: avoid; }
+  h1 { font-size: 22pt; margin: 0 0 4mm; letter-spacing: -0.02em; }
+  h2 { font-size: 14pt; margin: 7mm 0 2.5mm; padding-bottom: 1.5mm; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 11pt; margin: 5mm 0 2mm; }
+  h4 { font-size: 10pt; margin: 3mm 0 1mm; }
+  p { margin: 0 0 2.5mm; }
+  ul { margin: 0 0 2.5mm; padding-left: 5mm; }
+  li { margin-bottom: 0.8mm; }
+  a { color: var(--accent); text-decoration: none; }
+  code { font: 8.5pt Consolas, "Cascadia Mono", monospace; background: #eef2ff; color: #1e293b; padding: 0 1mm; border-radius: 3px; }
+  pre { font: 8pt/1.45 Consolas, "Cascadia Mono", monospace; background: #0f172a; color: #e2e8f0; padding: 3mm 4mm; border-radius: 6px; margin: 1mm 0 3mm; white-space: pre-wrap; break-inside: avoid; }
+  pre .c { color: #94a3b8; }
+  table { width: 100%; border-collapse: collapse; margin: 1mm 0 4mm; font-size: 9pt; break-inside: auto; }
+  th, td { border: 1px solid var(--line); padding: 1.6mm 2.2mm; text-align: left; vertical-align: top; }
+  th { background: var(--soft); color: var(--navy); font-weight: 700; }
+  tr { break-inside: avoid; }
+
+  .chapter { break-before: page; }
+  .kicker { font-size: 8pt; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.5mm; }
+  .lead { font-size: 11pt; color: var(--muted); margin-bottom: 5mm; }
+  .muted { color: var(--muted); }
+  .small { font-size: 8.5pt; }
+
+  /* Cover */
+  .cover { height: 297mm; padding: 28mm 22mm; background: linear-gradient(150deg, #0b1736 0%, #1e3a8a 60%, #2563eb 100%); color: #fff; display: flex; flex-direction: column; }
+  .cover .brand { font-size: 13pt; font-weight: 800; letter-spacing: -0.01em; opacity: .95; }
+  .cover h1 { color: #fff; font-size: 34pt; margin-top: 60mm; max-width: 150mm; }
+  .cover .sub { font-size: 13pt; opacity: .85; max-width: 140mm; }
+  .cover .pills { margin-top: 10mm; display: flex; gap: 2.5mm; flex-wrap: wrap; }
+  .cover .pill { border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 1.2mm 4mm; font-size: 9pt; }
+  .cover .meta { margin-top: auto; font-size: 9pt; opacity: .8; border-top: 1px solid rgba(255,255,255,.25); padding-top: 4mm; display: flex; justify-content: space-between; }
+
+  /* TOC */
+  .toc ol { list-style: none; padding: 0; counter-reset: s; }
+  .toc li { counter-increment: s; display: flex; gap: 4mm; padding: 2.4mm 0; border-bottom: 1px dashed var(--line); font-size: 11pt; }
+  .toc li::before { content: counter(s, decimal-leading-zero); color: var(--accent); font-weight: 800; width: 9mm; }
+  .toc li span { color: var(--muted); font-size: 9pt; margin-left: auto; }
+
+  /* Cards and callouts */
+  .card { border: 1px solid var(--line); border-radius: 8px; padding: 3mm 4mm; margin: 0 0 3mm; break-inside: avoid; background: #fff; }
+  .card h4 { margin-top: 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+  .callout { border-left: 3px solid var(--accent); background: #eff6ff; padding: 2.5mm 4mm; border-radius: 0 6px 6px 0; margin: 2mm 0 4mm; break-inside: avoid; }
+  .callout.warn { border-color: var(--amber); background: #fffbeb; }
+  .callout.good { border-color: var(--green); background: #ecfdf5; }
+  .stat { border: 1px solid var(--line); border-radius: 8px; padding: 3mm; text-align: center; }
+  .stat b { display: block; font-size: 18pt; color: var(--navy); }
+  .stat span { font-size: 8.5pt; color: var(--muted); }
+
+  /* Change log entries */
+  .change { border: 1px solid var(--line); border-radius: 8px; margin: 0 0 3mm; break-inside: avoid; overflow: hidden; }
+  .change .hd { background: var(--soft); padding: 2mm 4mm; display: flex; justify-content: space-between; gap: 4mm; border-bottom: 1px solid var(--line); }
+  .change .hd b { color: var(--navy); }
+  .change .hd code { background: transparent; color: var(--muted); font-size: 7.5pt; text-align: right; }
+  .change dl { margin: 0; padding: 2mm 4mm 2.5mm; display: grid; grid-template-columns: 26mm 1fr; gap: 0.8mm 3mm; font-size: 9pt; }
+  .change dt { font-weight: 700; color: var(--muted); }
+  .change dd { margin: 0; }
+  .change dd.talk { font-style: italic; color: var(--blue); }
+
+  /* Before/After */
+  .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; break-inside: avoid; margin-bottom: 2mm; }
+  .ba .lbl { font-size: 8pt; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1mm; }
+  .ba .before .lbl { color: var(--red); }
+  .ba .after .lbl { color: var(--green); }
+  .benefits { display: flex; flex-wrap: wrap; gap: 1.5mm; margin: 0 0 6mm; }
+  .tag { font-size: 8pt; border-radius: 999px; padding: 0.6mm 2.6mm; background: #eef2ff; color: var(--blue); font-weight: 600; }
+
+  /* Q&A */
+  .qa { border: 1px solid var(--line); border-radius: 8px; padding: 3mm 4mm; margin-bottom: 3mm; break-inside: avoid; }
+  .qa .q { font-weight: 700; color: var(--navy); font-size: 10.5pt; margin-bottom: 1.5mm; }
+  .qa .row { display: grid; grid-template-columns: 27mm 1fr; gap: 3mm; font-size: 9pt; margin-bottom: 1mm; }
+  .qa .row b { color: var(--muted); }
+
+  /* Roadmap */
+  .concept { border: 1px solid var(--line); border-radius: 8px; padding: 3mm 4mm; margin-bottom: 3mm; break-inside: avoid; }
+  .concept .top { display: flex; justify-content: space-between; align-items: baseline; gap: 3mm; margin-bottom: 1.5mm; }
+  .concept .top h4 { margin: 0; font-size: 11pt; }
+  .lvl { font-size: 7.5pt; font-weight: 800; padding: 0.5mm 2.5mm; border-radius: 999px; white-space: nowrap; }
+  .lvl.b { background: #dcfce7; color: #166534; }
+  .lvl.i { background: #fef3c7; color: #92400e; }
+  .lvl.a { background: #fee2e2; color: #991b1b; }
+  .concept .row { display: grid; grid-template-columns: 30mm 1fr; gap: 3mm; font-size: 9pt; margin-bottom: 0.8mm; }
+  .concept .row b { color: var(--muted); }
+
+  /* Diagrams */
+  .diagram { border: 1px solid var(--line); border-radius: 10px; padding: 5mm; margin: 2mm 0 5mm; background: var(--soft); break-inside: avoid; }
+  .diagram .cap { font-size: 8pt; color: var(--muted); text-align: center; margin-top: 3mm; }
+  .flow { display: flex; align-items: center; justify-content: center; gap: 2mm; flex-wrap: wrap; }
+  .node { background: #fff; border: 1.5px solid var(--blue); border-radius: 7px; padding: 2mm 3mm; font-size: 8.5pt; text-align: center; min-width: 22mm; }
+  .node b { display: block; color: var(--navy); font-size: 9pt; }
+  .node.dark { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .node.dark b { color: #fff; }
+  .node.bad { border-color: var(--red); background: #fef2f2; }
+  .node.ext { border-style: dashed; border-color: #64748b; }
+  .node.db { border-radius: 50% / 18%; }
+  .arrow { color: var(--blue); font-weight: 800; font-size: 12pt; }
+  .stack { display: flex; flex-direction: column; gap: 1.5mm; align-items: stretch; }
+  .layer { background: #fff; border: 1.5px solid var(--blue); border-radius: 6px; padding: 1.6mm 3mm; font-size: 8.5pt; display: flex; justify-content: space-between; gap: 3mm; }
+  .layer b { color: var(--navy); }
+  .layer span { color: var(--muted); }
+  .down { text-align: center; color: var(--blue); font-size: 10pt; line-height: 1; }
+  .cols { display: grid; grid-template-columns: 1fr 1.6fr 1fr; gap: 4mm; align-items: center; }
+  .pipeline { display: flex; gap: 1mm; flex-wrap: wrap; justify-content: center; }
+  .chip { background: #fff; border: 1px solid var(--blue); border-radius: 999px; padding: 1mm 3mm; font-size: 8pt; color: var(--navy); font-weight: 600; }
+  .chip.g { border-color: var(--green); color: var(--green); }
+  .chip.r { border-color: var(--red); color: var(--red); }
+
+  /* Scores */
+  .bar { height: 3mm; background: var(--line); border-radius: 999px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--blue), var(--accent)); border-radius: 999px; }
+  .bar.before i { background: #94a3b8; }
+  .scoretable td:nth-child(2), .scoretable td:nth-child(4) { width: 12mm; text-align: center; font-weight: 700; }
+  .scoretable td:nth-child(3), .scoretable td:nth-child(5) { width: 32mm; }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <div class="brand">PinLearn</div>
+  <h1>Project Transformation Report</h1>
+  <div class="sub">What changed, why it matters, how to explain it in an interview, and what to learn next.</div>
+  <div class="pills">
+    <span class="pill">Architecture</span><span class="pill">Security</span><span class="pill">Testing</span>
+    <span class="pill">CI/CD &amp; Docker</span><span class="pill">UX &amp; Accessibility</span><span class="pill">Interview Prep</span>
+  </div>
+  <div class="meta">
+    <span>React 19 · Express 5 · MongoDB · Zod · Pino · GitHub Actions</span>
+    <span>October 2026</span>
+  </div>
+</section>
+
+<!-- ============ TOC ============ -->
+<section class="chapter toc">
+  <div class="kicker">Contents</div>
+  <h1>Table of Contents</h1>
+  <ol>
+    <li><a href="#s0">At a Glance</a><span>Summary of the transformation</span></li>
+    <li><a href="#s1">Project Overview</a><span>What it does, old vs new architecture</span></li>
+    <li><a href="#s2">Complete Change Log</a><span>Every change, grouped by category</span></li>
+    <li><a href="#s3">Before vs After</a><span>The most important improvements, side by side</span></li>
+    <li><a href="#s4">Interview Cheat Sheet</a><span>Concepts, short answers, follow-ups</span></li>
+    <li><a href="#s5">Learning Roadmap</a><span>What to study next and where</span></li>
+    <li><a href="#s6">Recruiter View</a><span>How the project reads to a hiring team</span></li>
+    <li><a href="#s7">Portfolio Value</a><span>Resume lines, screenshots, demo script</span></li>
+    <li><a href="#s8">Final Assessment</a><span>Scores before and after</span></li>
+  </ol>
+  <div class="callout warn small">
+    <b>How to read the scores in this document.</b> All scores are reviewer judgement, not measurements. They compare the codebase
+    before and after these changes. Treat them as a guide to where the project is strong and where it is still thin.
+  </div>
+</section>
+
+<!-- ============ AT A GLANCE ============ -->
+<section class="chapter" id="s0">
+  <div class="kicker">Summary</div>
+  <h1>At a Glance</h1>
+  <p class="lead">PinLearn went from a working feature demo with a single 1,199-line server file and no tests, to a layered,
+    tested, containerised application with a CI pipeline and a consistent UX foundation.</p>
+
+  <div class="grid3" style="margin-bottom:5mm">
+    <div class="stat"><b>1,199 → 40</b><span>lines in <code>server.js</code></span></div>
+    <div class="stat"><b>1 → 40</b><span>automated tests (26 backend, 14 frontend)</span></div>
+    <div class="stat"><b>0 → 3</b><span>CI jobs (backend, frontend, Docker)</span></div>
+    <div class="stat"><b>~25 → 1</b><span>error-handling code paths</span></div>
+    <div class="stat"><b>4</b><span>critical security holes closed</span></div>
+    <div class="stat"><b>0 → 2</b><span>health endpoints (liveness, readiness)</span></div>
+  </div>
+
+  <h3>The five changes that matter most</h3>
+  <table>
+    <tr><th style="width:38mm">Change</th><th>Why it matters in one sentence</th></tr>
+    <tr><td>Layered backend</td><td>Each file now has one job, so logic can be tested and changed without touching HTTP code.</td></tr>
+    <tr><td>Zod validation + central errors</td><td>Every input is checked at the door, and every failure comes back in the same shape with a request ID.</td></tr>
+    <tr><td>Server-derived streaks</td><td>The product's core metric can no longer be faked by an empty POST request.</td></tr>
+    <tr><td>Route guards + 401 handling</td><td>Signed-out users are redirected, and expired sessions recover cleanly instead of breaking pages.</td></tr>
+    <tr><td>Tests + CI + Docker</td><td>Every push is verified automatically, and anyone can run the full stack with one command.</td></tr>
+  </table>
+
+  <h3>What is still open</h3>
+  <ul>
+    <li>No refresh tokens or token revocation; the JWT lives for 7 days in <code>sessionStorage</code>.</li>
+    <li>Integration tests stop before the database. Signup, boards and streak flows are not tested end to end.</li>
+    <li>Rate limiting and the YouTube cache are in-memory, so they do not scale past one server instance.</li>
+    <li><code>Dashboard.jsx</code> (470 lines) and <code>Kanban.jsx</code> (921 lines) are still large; there is no shared button or form component library.</li>
+    <li>Docker images were written but not built locally; CI builds them on the first push.</li>
+  </ul>
+</section>
+
+<!-- ============ SECTION 1 ============ -->
+<section class="chapter" id="s1">
+  <div class="kicker">Section 1</div>
+  <h1>Project Overview</h1>
+
+  <h2>What the application does</h2>
+  <p>PinLearn is a Pinterest-style learning tracker. A user signs up and picks interests (React, DSA, DevOps...).
+    The dashboard then surfaces YouTube tutorials and GitHub repositories for those topics. Users save resources to
+    <b>boards</b>, move them through <b>saved → visited → in progress → completed</b>, attach <b>notes</b>, plan work on a
+    <b>Kanban board</b>, take a <b>daily quiz</b>, and build a <b>streak</b> shown on an activity calendar.</p>
+
+  <h2>Original architecture</h2>
+  <div class="diagram">
+    <div class="flow">
+      <div class="node"><b>React SPA</b>CRA · Tailwind<br/>no route guards</div>
+      <span class="arrow">→</span>
+      <div class="node bad" style="min-width:60mm"><b>server.js (1,199 lines)</b>routes + validation + business logic<br/>+ API clients + cache + TLS hack<br/>+ ~25 copy-pasted try/catch blocks</div>
+      <span class="arrow">→</span>
+      <div class="stack" style="min-width:30mm">
+        <div class="node db"><b>MongoDB</b></div>
+        <div class="node ext">YouTube · GitHub · QuizAPI</div>
+      </div>
+    </div>
+    <div class="cap">Before: everything in one file. Nothing could be tested in isolation, and render.yaml pointed at a health check that did not exist.</div>
+  </div>
+
+  <h2>New architecture</h2>
+  <div class="diagram">
+    <div class="cols">
+      <div class="stack">
+        <div class="node"><b>React SPA</b></div>
+        <div class="down">↓</div>
+        <div class="node small"><b>RequireAuth</b>route guard</div>
+        <div class="down">↓</div>
+        <div class="node small"><b>AppLayout</b>Navbar · skip link · boards</div>
+        <div class="down">↓</div>
+        <div class="node small"><b>apiRequest()</b>JWT · ApiError · 401 event</div>
+      </div>
+      <div class="stack">
+        <div class="layer"><b>app.js</b><span>helmet · CORS · request id · logs · rate limit</span></div>
+        <div class="down">↓</div>
+        <div class="layer"><b>routes/</b><span>one auth gate for all private routes</span></div>
+        <div class="down">↓</div>
+        <div class="layer"><b>validators/</b><span>Zod schemas, 400 before any logic</span></div>
+        <div class="down">↓</div>
+        <div class="layer"><b>controllers/</b><span>HTTP in, HTTP out, nothing else</span></div>
+        <div class="down">↓</div>
+        <div class="layer"><b>services/</b><span>streak · quiz · tokens · YouTube · GitHub</span></div>
+        <div class="down">↓</div>
+        <div class="layer"><b>models/</b><span>constraints · indexes</span></div>
+        <div class="layer" style="border-color:#b91c1c"><b>errorHandler</b><span>one place turns errors into JSON</span></div>
+      </div>
+      <div class="stack">
+        <div class="node db"><b>MongoDB</b>User · Board<br/>Activity · QuizCompletion</div>
+        <div class="node ext"><b>External APIs</b>timeouts · cache<br/>keys in headers</div>
+        <div class="node"><b>Pino logs</b>JSON · redacted</div>
+      </div>
+    </div>
+    <div class="cap">After: requests flow down through layers with one responsibility each. Errors from any layer flow to a single handler.</div>
+  </div>
+
+  <h2>Request flow (saving a resource)</h2>
+  <div class="diagram">
+    <div class="pipeline">
+      <span class="chip">Click "Save"</span><span class="arrow">→</span>
+      <span class="chip">apiRequest + Bearer JWT</span><span class="arrow">→</span>
+      <span class="chip">request id + log</span><span class="arrow">→</span>
+      <span class="chip">helmet · CORS</span><span class="arrow">→</span>
+      <span class="chip">rate limit</span><span class="arrow">→</span>
+      <span class="chip">authMiddleware</span><span class="arrow">→</span>
+      <span class="chip">validate(Zod)</span><span class="arrow">→</span>
+      <span class="chip">boardController</span><span class="arrow">→</span>
+      <span class="chip">board.save()</span><span class="arrow">→</span>
+      <span class="chip g">recordActivity()</span><span class="arrow">→</span>
+      <span class="chip g">201 + board</span>
+    </div>
+    <div class="pipeline" style="margin-top:3mm">
+      <span class="chip r">any throw</span><span class="arrow">→</span>
+      <span class="chip r">errorHandler</span><span class="arrow">→</span>
+      <span class="chip r">{ message, code, details?, requestId }</span><span class="arrow">→</span>
+      <span class="chip r">401? clear session → login</span>
+    </div>
+    <div class="cap">Green: happy path. Red: any failure, from any layer, takes the same route back to the user.</div>
+  </div>
+
+  <h2>Major technologies</h2>
+  <table>
+    <tr><th style="width:30mm">Area</th><th>Technology</th><th>Role</th></tr>
+    <tr><td>Frontend</td><td>React 19, React Router 6, Redux Toolkit, Tailwind 3, @hello-pangea/dnd</td><td>UI, routing, theme state, Kanban drag and drop</td></tr>
+    <tr><td>Backend</td><td>Express 5, Mongoose 9, bcrypt, jsonwebtoken</td><td>API, data access, password hashing, auth tokens</td></tr>
+    <tr><td>Validation</td><td><b>Zod 4</b> (new)</td><td>Schemas for every request and for environment config</td></tr>
+    <tr><td>Observability</td><td><b>Pino, pino-http</b> (new)</td><td>Structured JSON logs with request IDs and redaction</td></tr>
+    <tr><td>Security</td><td>helmet, express-rate-limit, cors</td><td>Headers, throttling, origin policy</td></tr>
+    <tr><td>Testing</td><td><b>node:test, supertest</b> (new), Jest, Testing Library</td><td>Backend unit + HTTP tests, frontend component tests</td></tr>
+    <tr><td>Delivery</td><td><b>GitHub Actions, Docker, docker-compose, nginx</b> (new), Render, Vercel</td><td>CI, containers, hosting</td></tr>
+  </table>
+
+  <h2>Key engineering decisions</h2>
+  <div class="grid2">
+    <div class="card"><h4>Validate at the boundary, trust inside</h4><p class="small">Zod parses input once in middleware. Controllers read <code>req.valid</code> and never re-check types.</p></div>
+    <div class="card"><h4>Pure functions for business rules</h4><p class="small"><code>computeStreak()</code> and <code>scoreQuiz()</code> take data and return data, so they are tested without a database.</p></div>
+    <div class="card"><h4>The server derives business events</h4><p class="small">Streak days are written only after verified actions. The client can no longer claim activity.</p></div>
+    <div class="card"><h4>Let the database enforce uniqueness</h4><p class="small">A unique index closes the "check then insert" race that application code alone cannot.</p></div>
+    <div class="card"><h4>Fail closed in production</h4><p class="small">Empty <code>CORS_ORIGINS</code> rejects browsers; the self-signed TLS bypass is ignored in production.</p></div>
+    <div class="card"><h4>Document known limits</h4><p class="small">The README lists what is not solved yet. Honest trade-offs read better than hidden gaps.</p></div>
+  </div>
+</section>
+
+<!-- ============ SECTION 2 ============ -->
+<section class="chapter" id="s2">
+  <div class="kicker">Section 2</div>
+  <h1>Complete Change Log</h1>
+  <p class="lead">Every change, grouped by category. Each entry ends with a one-line talking point you can say out loud.</p>
+
+  <h2>Architecture Changes</h2>
+  <div class="change"><div class="hd"><b>Split the monolith into layers</b><code>backend/{app,server}.js, config/, routes/, controllers/, services/, middleware/, validators/, utils/</code></div><dl>
+    <dt>Before</dt><dd>One 1,199-line <code>server.js</code> holding routing, validation, logic, API clients, caching and startup.</dd>
+    <dt>Now</dt><dd>Eight folders, each with one responsibility. <code>server.js</code> is ~40 lines of startup and shutdown.</dd>
+    <dt>Why</dt><dd>Code that does everything cannot be tested, reviewed or changed safely.</dd>
+    <dt>Benefits</dt><dd>Isolated unit tests, smaller diffs, obvious place for every new feature.</dd>
+    <dt>Recruiter impact</dt><dd>Removes the single biggest red flag in the original review.</dd>
+    <dt>Talking point</dt><dd class="talk">"I refactored a monolith into routes, controllers and services so business rules became pure, testable functions."</dd>
+  </dl></div>
+  <div class="change"><div class="hd"><b>App factory separated from server start</b><code>backend/app.js, backend/server.js</code></div><dl>
+    <dt>Before</dt><dd>Importing the app connected to MongoDB and started listening.</dd>
+    <dt>Now</dt><dd><code>createApp()</code> builds the app; <code>server.js</code> connects, listens and handles shutdown.</dd>
+    <dt>Why</dt><dd>Tests need the app without a port or a database.</dd>
+    <dt>Benefits</dt><dd>supertest drives the real middleware stack in memory.</dd>
+    <dt>Recruiter impact</dt><dd>Shows awareness of testability as a design goal.</dd>
+    <dt>Talking point</dt><dd class="talk">"Separating construction from startup is what made HTTP-level tests possible."</dd>
+  </dl></div>
+
+  <h2>Backend Changes</h2>
+  <div class="change"><div class="hd"><b>Centralised error handling</b><code>middleware/errorHandler.js, utils/AppError.js</code></div><dl>
+    <dt>Before</dt><dd>~25 copy-pasted try/catch blocks; responses mixed <code>{message}</code> and <code>{error}</code>; CORS errors became HTML pages.</dd>
+    <dt>Now</dt><dd>Code throws <code>AppError(status, message, code)</code>. One handler maps Zod, Mongoose, bad JSON, oversize body and duplicate-key errors to <code>{ message, code, details?, requestId }</code>.</dd>
+    <dt>Why</dt><dd>Inconsistent errors make clients fragile and leak internals.</dd>
+    <dt>Benefits</dt><dd>Predictable API contract; 5xx details never reach users; every error is traceable.</dd>
+    <dt>Recruiter impact</dt><dd>Signals production thinking rather than tutorial code.</dd>
+    <dt>Talking point</dt><dd class="talk">"Express 5 forwards async errors, so handlers just throw and one middleware decides what the client sees."</dd>
+  </dl></div>
+  <div class="change"><div class="hd"><b>Schema validation on every endpoint</b><code>validators/*.js, middleware/validate.js, config/env.js</code></div><dl>
+    <dt>Before</dt><dd>Ad hoc checks; some routes validated, some (<code>/api/interests</code>) did not; no length limits.</dd>
+    <dt>Now</dt><dd>Zod schemas for every body, query and param, plus the environment itself. Results land on <code>req.valid</code>.</dd>
+    <dt>Why</dt><dd>Untrusted input is the root of most API bugs and injection attacks.</dd>
+    <dt>Benefits</dt><dd>Type coercion blocks <code>{"$ne": null}</code> injection; field-level error messages; config fails fast at boot.</dd>
+    <dt>Recruiter impact</dt><dd>Matches what reviewers expect in any production Node API.</dd>
+    <dt>Talking point</dt><dd class="talk">"Validation happens once at the boundary; past that point the code can trust its inputs."</dd>
+  </dl></div>
+  <div class="change"><div class="hd"><b>Token logic in one service</b><code>services/tokenService.js, middleware/authMiddleware.js</code></div><dl>
+    <dt>Before</dt><dd>JWT signing and user-response shaping duplicated in signup and login.</dd>
+    <dt>Now</dt><dd><code>signToken</code>, <code>verifyToken</code> (algorithm pinned to HS256) and <code>buildAuthResponse</code> in one file.</dd>
+    <dt>Why</dt><dd>Duplicated security code drifts; pinning the algorithm blocks algorithm-confusion attacks.</dd>
+    <dt>Benefits</dt><dd>One place to add refresh tokens later.</dd>
+    <dt>Recruiter impact</dt><dd>Shows DRY applied where it matters most.</dd>
+    <dt>Talking point</dt><dd class="talk">"Auth logic lives in one service, and verification only accepts the algorithm we sign with."</dd>
+  </dl></div>
+  <div class="change"><div class="hd"><b>Third-party integrations as services</b><code>services/{youtube,github,quiz}Service.js, services/providerClient.js</code></div><dl>
+    <dt>Before</dt><dd>Inline fetch code; YouTube cache never evicted; substring filter dropped "shortcuts" tutorials; API key in URL.</dd>
+    <dt>Now</dt><dd>Bounded TTL cache (500 entries) with request coalescing; whole-word filtering; keys in headers; 8-second timeouts; pure <code>scoreQuiz()</code>.</dd>
+    <dt>Why</dt><dd>Unbounded memory growth and leaked keys are production incidents waiting to happen.</dd>
+    <dt>Benefits</dt><dd>Stable memory, fewer quota hits, testable scoring.</dd>
+    <dt>Recruiter impact</dt><dd>Demonstrates awareness of cost, quotas and failure modes.</dd>
+    <dt>Talking point</dt><dd class="talk">"Concurrent identical searches share one in-flight request, and the cache is capped so memory cannot grow forever."</dd>
+  </dl></div>
+
+  <h2>Frontend Changes</h2>
+  <div class="change"><div class="hd"><b>Route guards and shared layout</b><code>src/App.jsx, routes/RequireAuth.jsx, routes/AppLayout.jsx, routes/pageRoutes.jsx</code></div><dl>
+    <dt>Before</dt><dd>Any URL rendered without a token; <code>&lt;Navbar/&gt;</code> copy-pasted into 9 routes; boards fetched on the login page.</dd>
+    <dt>Now</dt><dd>Nested routes: <code>RequireAuth</code> → <code>AppLayout</code> (Navbar + Outlet) → pages. Boards load only after login.</dd>
+    <dt>Why</dt><dd>Duplicated layout drifts, and unguarded pages show broken shells.</dd>
+    <dt>Benefits</dt><dd>One place for auth, one place for layout; fewer wasted requests.</dd>
+    <dt>Recruiter impact</dt><dd>Fixes an obvious gap any reviewer clicks into first.</dd>
+    <dt>Talking point</dt><dd class="talk">"Layout routes with Outlet let me guard and wrap every private page in one declaration."</dd>
+  </dl></div>
+  <div class="change"><div class="hd"><b>Global 401 handling</b><code>src/api/client.js</code></div><dl>
+    <dt>Before</dt><dd>Expired tokens produced generic errors on each page.</dd>
+    <dt>Now</dt><dd>A 401 on an authenticated call clears the session and fires <code>auth:session-expired</code>; the guard redirects to login. Errors are typed <code>ApiError</code> with status and code.</dd>
+    <dt>Why</dt><dd>Session expiry is a cross-cutting concern; handling it per page guarantees inconsistency.</dd>
+    <dt>Benefits</dt><dd>Clean recovery; failed logins do not trigger it (tested).</dd>
+    <dt>Recruiter impact</dt><dd>Shows thinking about the whole session lifecycle.</dd>
+    <dt>Talking point</dt><dd class="talk">"The API client owns session expiry, so no page has to know about it."</dd>
+  </dl></div>
+  <div class="change"><div class="hd"><b>Error boundary, cleanup and extraction</b><code>components/ErrorBoundary.jsx, hooks/useThemeClass.js, Kanban/kanbanUtils.js, package.json</code></div><dl>
+    <dt>Before</dt><dd>A render crash blanked the app; unused <code>redux-saga</code> and <code>dotenv</code>; Kanban helpers inside a 1,034-line component.</dd>
+    <dt>Now</dt><dd>ErrorBoundary fallback with reload; unused dependencies removed; Kanban helpers moved to <code>kanbanUtils.js</code> (921 lines remain).</dd>
+    <dt>Why</dt><dd>Blank screens lose users; dead dependencies suggest copy-paste.</dd>
+    <dt>Benefits</dt><dd>Graceful failure, smaller install, clearer component.</dd>
+    <dt>Recruiter impact</dt><dd>Removes "tutorial residue" signals.</dd>
+    <dt>Talking point</dt><dd class="talk">"Error boundaries are still class components in React; I use one at the root as the last line of defence."</dd>
+  </dl></div>
+
+  <h2>Database Changes</h2>
+  <div class="change"><div class="hd"><b>Schema-level constraints</b><code>models/User.js, models/Boards.js, models/QuizCompletion.js</code></div><dl>
+    <dt>Before</dt><dd>Password selectable by default; email not normalised; unbounded strings and arrays.</dd>
+    <dt>Now</dt><dd><code>password: select:false</code>; email lowercased and trimmed; max lengths everywhere; caps of 30 interests, 500 resources per board, 100 notes per resource.</dd>
+    <dt>Why</dt><dd>Defence in depth: the database should reject bad data even if a route forgets.</dd>
+    <dt>Benefits</dt><dd>No accidental password leaks; documents cannot approach Mongo's 16 MB limit.</dd>
+    <dt>Recruiter impact</dt><dd>Shows understanding of embedded-document limits.</dd>
+    <dt>Talking point</dt><dd class="talk">"Secure defaults: the password field is excluded unless a query explicitly asks for it."</dd>
+  </dl></div>
+  <div class="change"><div class="hd"><b>Indexes and the board-name race</b><code>models/Boards.js, controllers/boardController.js</code></div><dl>
+    <dt>Before</dt><dd>Duplicate check with a case-insensitive regex, then insert: unindexable and racy.</dd>
+    <dt>Now</dt><dd>Case-folded <code>nameKey</code> with a partial unique index <code>{userId, nameKey}</code>; duplicate-key error mapped to 409; index on <code>{userId, createdAt}</code>.</dd>
+    <dt>Why</dt><dd>Two parallel requests could both pass the check and both insert.</dd>
+    <dt>Benefits</dt><dd>Correct under concurrency; faster board listing.</dd>
+    <dt>Recruiter impact</dt><dd>Race conditions are a classic interview topic; this is a real example.</dd>
+    <dt>Talking point</dt><dd class="talk">"The partial index meant legacy boards without the new field could not break the migration."</dd>
+  </dl></div>
+  <div class="change"><div class="hd"><b>Dedicated Activity model</b><code>models/Activity.js, services/streakService.js</code></div><dl>
+    <dt>Before</dt><dd>Non-quiz activity was stored as a fake <code>QuizCompletion</code> with <code>quizId: "activity-save"</code>.</dd>
+    <dt>Now</dt><dd><code>Activity {userId, date, type}</code> with a unique <code>{userId, date}</code> index; streak reads both collections.</dd>
+    <dt>Why</dt><dd>Overloading a model hides meaning and corrupts analytics.</dd>
+    <dt>Benefits</dt><dd>Idempotent daily writes; honest data model; backward compatible.</dd>
+    <dt>Recruiter impact</dt><dd>Shows data-modelling judgement.</dd>
+    <dt>Talking point</dt><dd class="talk">"A unique index makes 'record today's activity' idempotent without any locking."</dd>
+  </dl></div>
+
+  <h2>Security Changes</h2>
+  <table>
+    <tr><th style="width:42mm">Change</th><th>Before</th><th>Now</th><th style="width:40mm">Talking point</th></tr>
+    <tr><td><b>Paid API proxies protected</b><br/><span class="small muted">routes/contentRoutes.js, middleware/rateLimiters.js</span></td><td>Anyone could call <code>/api/youtube</code> and <code>/api/github</code> and burn quota.</td><td>Auth required + 30 req/min per user; <code>trust proxy</code> in production.</td><td class="small"><i>"Rate-limit by user, not IP, when everyone sits behind one proxy."</i></td></tr>
+    <tr><td><b>Streak farming removed</b><br/><span class="small muted">controllers/board, resource, quiz</span></td><td>Empty <code>POST /api/activity</code> granted a streak day.</td><td>Route deleted; activity recorded only after verified actions.</td><td class="small"><i>"Never let the client assert a business event."</i></td></tr>
+    <tr><td><b>URL sanitising</b><br/><span class="small muted">utils/url.js, validators/boards.js</span></td><td><code>javascript:</code> URLs could be stored and rendered as links.</td><td>Only <code>http(s)</code> accepted and normalised.</td><td class="small"><i>"React escapes text, not href schemes."</i></td></tr>
+    <tr><td><b>Credential hardening</b><br/><span class="small muted">controllers/authController.js</span></td><td>bcrypt cost 10, no max length, timing revealed unknown emails.</td><td>Cost 12, 72-char cap, dummy-hash compare for unknown emails.</td><td class="small"><i>"Constant-ish timing prevents account enumeration."</i></td></tr>
+    <tr><td><b>Fail-closed config</b><br/><span class="small muted">config/cors.js, config/env.js, utils/logger.js</span></td><td>Empty CORS allowed all origins; TLS bypass usable anywhere; tokens could reach logs.</td><td>CORS rejects in prod when empty; TLS bypass dev-only; auth headers and passwords redacted.</td><td class="small"><i>"Secure defaults beat secure documentation."</i></td></tr>
+    <tr><td><b>Debug route removed</b><br/><span class="small muted">routes/*</span></td><td><code>GET /api/protected</code> shipped to production.</td><td>Removed, with a test asserting 404.</td><td class="small"><i>"Regression tests stop it coming back."</i></td></tr>
+  </table>
+
+  <h2>UX Changes</h2>
+  <table>
+    <tr><th style="width:42mm">Change</th><th>Before</th><th>Now</th><th style="width:36mm">UX principle</th></tr>
+    <tr><td><b>Navigation state</b><br/><span class="small muted">Navbar/Navbar.jsx, routes/AppLayout.jsx</span></td><td>No active link; logo not clickable; mobile menu stayed open.</td><td>Active underline + <code>aria-current</code>; logo links home; menu closes on navigate/Escape; skip link.</td><td class="small">Visibility of system status; WCAG 2.4.1</td></tr>
+    <tr><td><b>Loading skeletons</b><br/><span class="small muted">components/ui/Skeleton.jsx</span></td><td>"Loading..." text or a bare div.</td><td>Card-shaped placeholders with <code>role="status"</code> on Boards, Topic, Quiz, Profile.</td><td class="small">Perceived performance; no layout shift</td></tr>
+    <tr><td><b>Empty and error states</b><br/><span class="small muted">components/ui/StateViews.jsx</span></td><td>Three different styles; no retry.</td><td>Shared <code>EmptyState</code> / <code>ErrorState</code> that explain the next step.</td><td class="small">Empty states teach; errors offer a way out</td></tr>
+    <tr><td><b>404 and titles</b><br/><span class="small muted">ui/NotFound.jsx, hooks/usePageTitle.js, public/index.html</span></td><td>Blank page on bad URLs; every tab said "React App".</td><td>404 with a way back; per-route titles; real meta description.</td><td class="small">Recognition over recall</td></tr>
+    <tr><td><b>Accessible dialog</b><br/><span class="small muted">Boards/Boards.jsx</span></td><td>No dialog role, unlabelled close button, no Escape.</td><td><code>role="dialog"</code>, <code>aria-modal</code>, labelled heading, Escape and click-outside close.</td><td class="small">WCAG 4.1.2 Name, Role, Value</td></tr>
+    <tr><td><b>Responsive fixes</b><br/><span class="small muted">index.css, Kanban, BoardDetails, Dashboard</span></td><td>Fixed min-widths caused horizontal scroll on phones.</td><td>Fluid widths; 2-column Kanban on tablets; media capped at 100%.</td><td class="small">Mobile-first layout</td></tr>
+  </table>
+
+  <h2>Testing Changes</h2>
+  <div class="change"><div class="hd"><b>Backend unit and HTTP tests (26)</b><code>backend/tests/{streak,units,api}.test.js</code></div><dl>
+    <dt>Before</dt><dd><code>"test": "echo Error: no test specified"</code>.</dd>
+    <dt>Now</dt><dd>Node's built-in runner. Unit: streak edge cases (month/year boundaries, timezones, gaps), quiz scoring, URL sanitiser, schemas. HTTP: auth, validation, error shape, removed routes, 404, 503 for unconfigured integrations.</dd>
+    <dt>Why</dt><dd>Untested code cannot be refactored safely.</dd>
+    <dt>Benefits</dt><dd>Fast, hermetic (local <code>.env</code> is skipped in tests), no database needed.</dd>
+    <dt>Recruiter impact</dt><dd>Turns the weakest score (1/10) into a credible story.</dd>
+    <dt>Talking point</dt><dd class="talk">"Pure functions get unit tests; the HTTP layer gets supertest tests that reject before touching the DB."</dd>
+  </dl></div>
+  <div class="change"><div class="hd"><b>Frontend tests (14)</b><code>src/App.test.js, api/client.test.js, components/ErrorBoundary.test.jsx</code></div><dl>
+    <dt>Before</dt><dd>One default CRA test that rendered <code>App</code> without its Redux provider.</dd>
+    <dt>Now</dt><dd>Route-guard redirects for 5 private routes, 404 page, active nav + skip link + page title, 401 handling (4 cases), ErrorBoundary fallback.</dd>
+    <dt>Why</dt><dd>Tests should describe behaviour a user or a bug report would mention.</dd>
+    <dt>Benefits</dt><dd>Guards against regressions in auth flow and accessibility.</dd>
+    <dt>Recruiter impact</dt><dd>Shows Testing Library's "test like a user" approach.</dd>
+    <dt>Talking point</dt><dd class="talk">"I query by role and accessible name, so my tests also check accessibility."</dd>
+  </dl></div>
+
+  <h2>CI/CD Changes</h2>
+  <div class="change"><div class="hd"><b>GitHub Actions pipeline</b><code>.github/workflows/ci.yml</code></div><dl>
+    <dt>Before</dt><dd>No automated checks.</dd>
+    <dt>Now</dt><dd>On every push and PR: backend <code>npm ci</code> + tests + <code>npm audit</code>; frontend tests + production build (lint warnings fail); then both Docker images build.</dd>
+    <dt>Why</dt><dd>Humans forget to run tests; pipelines do not.</dd>
+    <dt>Benefits</dt><dd>Broken code cannot reach <code>main</code> silently; dependency CVEs surface early.</dd>
+    <dt>Recruiter impact</dt><dd>A green CI badge is one of the fastest credibility signals on GitHub.</dd>
+    <dt>Talking point</dt><dd class="talk">"Docker builds only run after both test jobs pass, so we never package broken code."</dd>
+  </dl></div>
+
+  <h2>DevOps Changes</h2>
+  <div class="change"><div class="hd"><b>Containers and local stack</b><code>backend/Dockerfile, Pinterest/Dockerfile, Pinterest/nginx.conf, docker-compose.yml, backend/.env.example</code></div><dl>
+    <dt>Before</dt><dd>Manual setup; secrets list only in prose.</dd>
+    <dt>Now</dt><dd>Multi-stage images; API runs as non-root with a HEALTHCHECK; web served by nginx with SPA fallback and long-lived static caching; compose runs API + web + MongoDB.</dd>
+    <dt>Why</dt><dd>"Works on my machine" is not a deployment strategy.</dd>
+    <dt>Benefits</dt><dd>One-command setup; smaller images; reproducible builds.</dd>
+    <dt>Recruiter impact</dt><dd>Docker literacy is expected for most backend roles.</dd>
+    <dt>Talking point</dt><dd class="talk">"CRA inlines env vars at build time, so the API URL is a Docker build arg, not a runtime env."</dd>
+  </dl></div>
+
+  <h2>Production Readiness Changes</h2>
+  <table>
+    <tr><th style="width:42mm">Change</th><th>Before</th><th>Now</th></tr>
+    <tr><td><b>Health and readiness</b><br/><span class="small muted">app.js, render.yaml, DEPLOYMENT.md</span></td><td>render.yaml checked <code>/api/health</code>, which did not exist.</td><td><code>/api/health</code> (liveness) and <code>/api/ready</code> (503 when MongoDB is down), both ahead of the rate limiter.</td></tr>
+    <tr><td><b>Structured logging</b><br/><span class="small muted">utils/logger.js, app.js</span></td><td><code>console.error</code> with full provider bodies.</td><td>Pino JSON logs, request IDs echoed as <code>X-Request-Id</code>, redaction of auth headers and passwords.</td></tr>
+    <tr><td><b>Lifecycle</b><br/><span class="small muted">server.js, config/env.js</span></td><td>No shutdown handling; env checked for two keys.</td><td>Graceful SIGTERM/SIGINT shutdown, unhandled-rejection handler, full Zod env validation.</td></tr>
+    <tr><td><b>Documentation</b><br/><span class="small muted">README.md, DEPLOYMENT.md</span></td><td>Create React App boilerplate README.</td><td>Architecture diagram, setup, API table, design decisions, security notes, known limitations.</td></tr>
+  </table>
+</section>
+
+<!-- ============ SECTION 3 ============ -->
+<section class="chapter" id="s3">
+  <div class="kicker">Section 3</div>
+  <h1>Before vs After</h1>
+  <p class="lead">Six changes that best show the jump in quality. Snippets are trimmed to the essential lines.</p>
+
+  <h3>1. Error handling</h3>
+  <div class="ba">
+    <div class="before"><div class="lbl">Before · repeated ~25 times</div>
+<pre>app.post("/api/resources/note", auth, async (req, res) => {
+  try {
+    if (!boardId) return res.status(400)
+      .json({ error: "Missing boardId" });
+    ...
+    if (!board) return res.status(404)
+      .json({ message: "Board not found" });
+  } catch (error) {
+    console.error("Error adding note:", error);
+    res.status(500).json({ message: "Failed" });
+  }
+});</pre></div>
+    <div class="after"><div class="lbl">After</div>
+<pre>router.post("/resources/note",
+  validate({ body: schemas.addNote }),
+  resources.addNote);
+
+async function addNote(req, res) {
+  const { boardId, resourceId, content } = req.valid.body;
+  const { board, resource } =
+    await findOwnedResource(req.userId, boardId, resourceId);
+  resource.notes.push({ content });
+  await board.save();
+  res.json({ message: "Note added", notes: resource.notes });
+}</pre></div>
+  </div>
+  <div class="benefits"><span class="tag">maintainability</span><span class="tag">readability</span><span class="tag">consistent API</span><span class="tag">observability</span></div>
+
+  <h3>2. Streak integrity</h3>
+  <div class="ba">
+    <div class="before"><div class="lbl">Before</div>
+<pre><span class="c">// Frontend, after any save or completion:</span>
+markActivity();   <span class="c">// POST /api/activity</span>
+
+<span class="c">// Backend: trusts the call, writes a fake quiz row</span>
+await QuizCompletion.create({
+  quizId: "activity-save", score: 0, ...
+});</pre></div>
+    <div class="after"><div class="lbl">After</div>
+<pre><span class="c">// Inside the save handler, after the DB write succeeds:</span>
+await board.save();
+await recordActivity(req.userId, "save");
+
+<span class="c">// The public endpoint no longer exists (test asserts 404).</span>
+<span class="c">// Streak math is a pure function:</span>
+computeStreak(activeDates, today);</pre></div>
+  </div>
+  <div class="benefits"><span class="tag">security</span><span class="tag">data integrity</span><span class="tag">testability</span></div>
+
+  <h3>3. Input validation</h3>
+  <div class="ba">
+    <div class="before"><div class="lbl">Before</div>
+<pre>const selectedInterests =
+  Array.isArray(req.body.selectedInterests)
+    ? req.body.selectedInterests   <span class="c">// any types</span>
+    : [];                          <span class="c">// missing = wipe</span></pre></div>
+    <div class="after"><div class="lbl">After</div>
+<pre>const interests = z
+  .array(z.string().trim().min(1).max(40))
+  .max(30, "At most 30 interests are allowed");
+
+const updateInterests = z.object({ selectedInterests: interests });</pre></div>
+  </div>
+  <div class="benefits"><span class="tag">security</span><span class="tag">correctness</span><span class="tag">self-documenting</span></div>
+
+  <h3>4. Board uniqueness under concurrency</h3>
+  <div class="ba">
+    <div class="before"><div class="lbl">Before · check-then-insert race</div>
+<pre>const existing = await Board.findOne({
+  userId,
+  name: new RegExp(`^${escaped}$`, "i")  <span class="c">// no index</span>
+});
+if (existing) return res.status(409)...
+await Board.create({ userId, name });   <span class="c">// race window</span></pre></div>
+    <div class="after"><div class="lbl">After · database is the source of truth</div>
+<pre>boardSchema.index({ userId: 1, nameKey: 1 }, {
+  unique: true,
+  partialFilterExpression: { nameKey: { $type: "string" } }
+});
+
+try { await Board.create({ userId, name }); }
+catch (e) { if (e.code === 11000) throw duplicateError(); throw e; }</pre></div>
+  </div>
+  <div class="benefits"><span class="tag">correctness</span><span class="tag">scalability</span><span class="tag">performance</span></div>
+
+  <h3>5. Frontend routing</h3>
+  <div class="ba">
+    <div class="before"><div class="lbl">Before · repeated for 9 routes, no guard</div>
+<pre>&lt;Route path="/boards" element={
+  &lt;&gt;
+    &lt;Navbar /&gt;
+    &lt;Boards boards={boards} ... /&gt;
+  &lt;/&gt;
+} /&gt;</pre></div>
+    <div class="after"><div class="lbl">After</div>
+<pre>&lt;Route element={&lt;RequireAuth /&gt;}&gt;
+  &lt;Route element={&lt;AppLayout /&gt;}&gt;
+    &lt;Route path="/boards" element={&lt;BoardsRoute /&gt;} /&gt;
+    ...
+  &lt;/Route&gt;
+&lt;/Route&gt;
+&lt;Route path="*" element={&lt;NotFound /&gt;} /&gt;</pre></div>
+  </div>
+  <div class="benefits"><span class="tag">security</span><span class="tag">maintainability</span><span class="tag">developer experience</span></div>
+
+  <h3>6. Third-party cache</h3>
+  <div class="ba">
+    <div class="before"><div class="lbl">Before · memory leak</div>
+<pre>if (Date.now() &gt; entry.expiresAt) {
+  return null;          <span class="c">// expired entry stays forever</span>
+}
+...
+`&amp;key=${process.env.YOUTUBE_API_KEY}`  <span class="c">// key in URL</span></pre></div>
+    <div class="after"><div class="lbl">After</div>
+<pre>if (Date.now() &gt; entry.expiresAt) {
+  cache.delete(key); return null;
+}
+if (cache.size &gt;= MAX_CACHE_ENTRIES)
+  cache.delete(cache.keys().next().value);
+headers: { "X-Goog-Api-Key": config.YOUTUBE_API_KEY }</pre></div>
+  </div>
+  <div class="benefits"><span class="tag">scalability</span><span class="tag">security</span><span class="tag">cost control</span></div>
+</section>
+
+<!-- ============ SECTION 4 ============ -->
+<section class="chapter" id="s4">
+  <div class="kicker">Section 4</div>
+  <h1>Interview Cheat Sheet</h1>
+  <p class="lead">Short answers you can give in 30 seconds, tied to this project. Practise saying them aloud.</p>
+
+  <div class="qa"><div class="q">What is centralised error handling?</div>
+    <div class="row"><b>Short answer</b><span>A single middleware receives every error, decides the status code and response body, and logs it. Route code just throws.</span></div>
+    <div class="row"><b>How we used it</b><span><code>AppError(status, message, code)</code> plus <code>errorHandler.js</code>, which maps Zod, Mongoose, JSON-parse and duplicate-key errors to one JSON shape with a <code>requestId</code>.</span></div>
+    <div class="row"><b>Why industry uses it</b><span>Consistent contracts for clients, no leaked stack traces, one place to add alerting.</span></div>
+    <div class="row"><b>Follow-ups</b><span>How does Express know a middleware is an error handler? (four arguments) · What changed in Express 5 for async errors? · Operational vs programmer errors?</span></div></div>
+
+  <div class="qa"><div class="q">Why validate requests with a schema library?</div>
+    <div class="row"><b>Short answer</b><span>A schema declares the exact shape of valid input; anything else is rejected before business logic runs.</span></div>
+    <div class="row"><b>How we used it</b><span>Zod schemas for every body, query and param, plus <code>process.env</code>. A <code>validate()</code> middleware puts parsed data on <code>req.valid</code>.</span></div>
+    <div class="row"><b>Why industry uses it</b><span>Prevents injection, gives precise error messages, and doubles as documentation (and can generate OpenAPI or TypeScript types).</span></div>
+    <div class="row"><b>Follow-ups</b><span>Parse vs validate? · Where else should validation live (DB constraints)? · How does NoSQL injection work?</span></div></div>
+
+  <div class="qa"><div class="q">What is a service layer?</div>
+    <div class="row"><b>Short answer</b><span>A layer that holds business rules, separate from HTTP (controllers) and storage (models).</span></div>
+    <div class="row"><b>How we used it</b><span><code>streakService</code>, <code>quizService</code>, <code>tokenService</code>, <code>youtubeService</code>. Controllers are 5-15 lines each.</span></div>
+    <div class="row"><b>Why industry uses it</b><span>Logic can be reused (CLI, queue worker, other routes) and unit-tested without HTTP.</span></div>
+    <div class="row"><b>Follow-ups</b><span>Service vs repository pattern? · Where would you put a transaction? · How would dependency injection help testing?</span></div></div>
+
+  <div class="qa"><div class="q">How do route guards work in React?</div>
+    <div class="row"><b>Short answer</b><span>A wrapper route checks auth and either renders its children (<code>&lt;Outlet/&gt;</code>) or redirects with <code>&lt;Navigate/&gt;</code>.</span></div>
+    <div class="row"><b>How we used it</b><span><code>RequireAuth</code> wraps <code>AppLayout</code>, which wraps all private pages, and listens for a session-expired event.</span></div>
+    <div class="row"><b>Why industry uses it</b><span>One declaration protects many routes; layout and auth stay in sync.</span></div>
+    <div class="row"><b>Follow-ups</b><span>Is a client-side guard real security? (No: the API must enforce it) · How would you preserve the intended URL after login? · Role-based guards?</span></div></div>
+
+  <div class="qa"><div class="q">What is rate limiting and how do you choose the key?</div>
+    <div class="row"><b>Short answer</b><span>Capping requests per client per time window to prevent abuse and protect resources.</span></div>
+    <div class="row"><b>How we used it</b><span>Global 300/15 min, auth 20/15 min, provider proxies 30/min keyed by <b>user id</b>; <code>trust proxy</code> so IPs are real behind Render.</span></div>
+    <div class="row"><b>Why industry uses it</b><span>Stops brute force, scraping and runaway bills on paid APIs.</span></div>
+    <div class="row"><b>Follow-ups</b><span>Fixed window vs sliding window vs token bucket? · Why does in-memory limiting break with two servers? · What is a 429 + Retry-After?</span></div></div>
+
+  <div class="qa"><div class="q">What is structured logging?</div>
+    <div class="row"><b>Short answer</b><span>Logging JSON objects with fields instead of free text, so logs can be searched and aggregated.</span></div>
+    <div class="row"><b>How we used it</b><span>Pino with a per-request ID returned in <code>X-Request-Id</code>; secrets redacted; pretty output in dev only.</span></div>
+    <div class="row"><b>Why industry uses it</b><span>Tools like Datadog, ELK and CloudWatch query fields; request IDs connect a user's bug report to one log line.</span></div>
+    <div class="row"><b>Follow-ups</b><span>Logs vs metrics vs traces? · What must never be logged? · What is log level and when do you use each?</span></div></div>
+
+  <div class="qa"><div class="q">Liveness vs readiness checks?</div>
+    <div class="row"><b>Short answer</b><span>Liveness: "is the process alive?" Readiness: "can it serve traffic right now?"</span></div>
+    <div class="row"><b>How we used it</b><span><code>/api/health</code> always 200 for Render; <code>/api/ready</code> returns 503 when MongoDB is disconnected. Both bypass the rate limiter.</span></div>
+    <div class="row"><b>Why industry uses it</b><span>Orchestrators restart dead containers and stop routing to unready ones, enabling zero-downtime deploys.</span></div>
+    <div class="row"><b>Follow-ups</b><span>Why not check the DB in liveness? (a DB outage would restart every pod) · What is graceful shutdown?</span></div></div>
+
+  <div class="qa"><div class="q">What is CI/CD?</div>
+    <div class="row"><b>Short answer</b><span>CI automatically builds and tests every change; CD automatically deploys changes that pass.</span></div>
+    <div class="row"><b>How we used it</b><span>GitHub Actions: backend tests + audit, frontend tests + build, then Docker builds. Render and Vercel deploy from <code>main</code>.</span></div>
+    <div class="row"><b>Why industry uses it</b><span>Small, verified, frequent changes are safer than big manual releases.</span></div>
+    <div class="row"><b>Follow-ups</b><span>How would you add a staging environment? · Branch protection? · How do you handle secrets in CI?</span></div></div>
+
+  <div class="qa"><div class="q">Why Docker, and what is a multi-stage build?</div>
+    <div class="row"><b>Short answer</b><span>Docker packages an app with its runtime so it runs the same everywhere. Multi-stage builds compile in one image and copy only the output into a small final image.</span></div>
+    <div class="row"><b>How we used it</b><span>API: install prod deps, run as non-root, HEALTHCHECK. Web: build with Node, serve static files with nginx.</span></div>
+    <div class="row"><b>Why industry uses it</b><span>Reproducible environments, smaller attack surface, standard unit for Kubernetes and cloud hosts.</span></div>
+    <div class="row"><b>Follow-ups</b><span>Image vs container? · Why order COPY package.json before COPY . ? (layer caching) · Why not run as root?</span></div></div>
+
+  <div class="qa"><div class="q">How do you test a Node API?</div>
+    <div class="row"><b>Short answer</b><span>Unit-test pure logic; integration-test HTTP behaviour through the real middleware stack; keep a few end-to-end tests.</span></div>
+    <div class="row"><b>How we used it</b><span><code>node:test</code> for streak and scoring rules; supertest against <code>createApp()</code> for auth, validation and error shape.</span></div>
+    <div class="row"><b>Why industry uses it</b><span>The testing pyramid / trophy balances speed and confidence.</span></div>
+    <div class="row"><b>Follow-ups</b><span>How would you test DB flows? (mongodb-memory-server or test containers) · Mocks vs fakes? · What makes a test flaky?</span></div></div>
+
+  <div class="qa"><div class="q">How did you refactor a 1,199-line file without breaking it?</div>
+    <div class="row"><b>Short answer</b><span>Kept every URL and response shape, extracted by responsibility, and added tests at the HTTP boundary.</span></div>
+    <div class="row"><b>How we used it</b><span>Same routes, same JWT format, same login flow; frontend needed only two small changes (auth on content calls, removed <code>markActivity</code>).</span></div>
+    <div class="row"><b>Why industry uses it</b><span>Behaviour-preserving refactors behind tests are how teams pay down debt without big-bang rewrites.</span></div>
+    <div class="row"><b>Follow-ups</b><span>Strangler-fig pattern? · How do you refactor with no tests? (characterisation tests first) · What would you split next?</span></div></div>
+</section>
+
+<!-- ============ SECTION 5 ============ -->
+<section class="chapter" id="s5">
+  <div class="kicker">Section 5</div>
+  <h1>Learning Roadmap</h1>
+  <p class="lead">Not lessons: starting points. Each card tells you why a concept is worth your time and where to go next.
+    Times are rough estimates for working proficiency.</p>
+
+  <div class="diagram">
+    <div class="pipeline">
+      <span class="chip">1 · Validation</span><span class="arrow">→</span>
+      <span class="chip">2 · Error middleware</span><span class="arrow">→</span>
+      <span class="chip">3 · Unit + integration tests</span><span class="arrow">→</span>
+      <span class="chip">4 · GitHub Actions</span><span class="arrow">→</span>
+      <span class="chip">5 · Docker</span><span class="arrow">→</span>
+      <span class="chip">6 · JWT + refresh tokens</span><span class="arrow">→</span>
+      <span class="chip">7 · React Query</span><span class="arrow">→</span>
+      <span class="chip">8 · Redis caching + rate limits</span><span class="arrow">→</span>
+      <span class="chip">9 · Observability</span><span class="arrow">→</span>
+      <span class="chip">10 · Design systems + a11y</span>
+    </div>
+    <div class="cap">Suggested order: each step builds on the one before and maps to a change already in this codebase.</div>
+  </div>
+
+  <div class="concept"><div class="top"><h4>API Validation (Zod)</h4><span class="lvl b">Beginner</span></div>
+    <div class="row"><b>What it is</b><span>Declaring the shape of data once and parsing untrusted input against it.</span></div>
+    <div class="row"><b>Why it is cool</b><span>One schema can validate requests, generate TypeScript types and produce API docs. Write once, use three times.</span></div>
+    <div class="row"><b>In this project</b><span>Every endpoint and the environment config; blocked NoSQL-injection payloads in tests.</span></div>
+    <div class="row"><b>Industry usage</b><span>tRPC, Next.js server actions, form libraries; standard in TypeScript backends.</span></div>
+    <div class="row"><b>Learn next</b><span>refine/transform · discriminated unions · z.infer types · zod-to-openapi</span></div>
+    <div class="row"><b>Resources</b><span>Docs: zod.dev · Blog: Total TypeScript (Matt Pocock) on Zod · Course: Total TypeScript Zod tutorial</span></div>
+    <div class="row"><b>Time</b><span>3-5 hours</span></div></div>
+
+  <div class="concept"><div class="top"><h4>Error Middleware</h4><span class="lvl b">Beginner</span></div>
+    <div class="row"><b>What it is</b><span>A four-argument Express middleware that turns thrown errors into HTTP responses.</span></div>
+    <div class="row"><b>Why it is cool</b><span>It deletes code: dozens of try/catch blocks disappear and your API becomes predictable.</span></div>
+    <div class="row"><b>In this project</b><span><code>AppError</code> + <code>errorHandler.js</code>; standard <code>{message, code, requestId}</code> body.</span></div>
+    <div class="row"><b>Industry usage</b><span>Every mature web framework has this hook (NestJS exception filters, Spring @ControllerAdvice).</span></div>
+    <div class="row"><b>Learn next</b><span>Operational vs programmer errors · RFC 9457 Problem Details · error tracking (Sentry)</span></div>
+    <div class="row"><b>Resources</b><span>Docs: expressjs.com/en/guide/error-handling.html · Blog: "Node.js Best Practices" repo (goldbergyoni) error section</span></div>
+    <div class="row"><b>Time</b><span>2-3 hours</span></div></div>
+
+  <div class="concept"><div class="top"><h4>Service Layer &amp; Repository Pattern</h4><span class="lvl i">Intermediate</span></div>
+    <div class="row"><b>What it is</b><span>Service: where business rules live. Repository: an object that hides how data is stored.</span></div>
+    <div class="row"><b>Why it is cool</b><span>Swap MongoDB for Postgres, or HTTP for a queue, and the business rules do not change.</span></div>
+    <div class="row"><b>In this project</b><span>Services exist; a repository layer does not yet (controllers call Mongoose directly). Good next refactor.</span></div>
+    <div class="row"><b>Industry usage</b><span>Clean / hexagonal architecture in large codebases; NestJS providers.</span></div>
+    <div class="row"><b>Learn next</b><span>Hexagonal architecture · dependency inversion · unit of work</span></div>
+    <div class="row"><b>Resources</b><span>Docs: martinfowler.com/eaaCatalog (Service Layer, Repository) · Book: "Patterns of Enterprise Application Architecture"</span></div>
+    <div class="row"><b>Time</b><span>1 week</span></div></div>
+
+  <div class="concept"><div class="top"><h4>Dependency Injection</h4><span class="lvl i">Intermediate</span></div>
+    <div class="row"><b>What it is</b><span>Passing a component's dependencies in, rather than letting it import or create them.</span></div>
+    <div class="row"><b>Why it is cool</b><span>Tests can hand in a fake database or a fake clock. Our streak tests had to pass <code>today</code> in for exactly this reason.</span></div>
+    <div class="row"><b>In this project</b><span>Partial: <code>createApp()</code> and <code>computeStreak(dates, today)</code>. Services still import config directly.</span></div>
+    <div class="row"><b>Industry usage</b><span>NestJS, Angular, Spring and .NET are built around it.</span></div>
+    <div class="row"><b>Learn next</b><span>Constructor injection · IoC containers · composition root</span></div>
+    <div class="row"><b>Resources</b><span>Docs: docs.nestjs.com/providers · Blog: Martin Fowler, "Inversion of Control Containers and the Dependency Injection pattern"</span></div>
+    <div class="row"><b>Time</b><span>4-6 hours</span></div></div>
+
+  <div class="concept"><div class="top"><h4>JWT Authentication &amp; Refresh Tokens</h4><span class="lvl i">Intermediate</span></div>
+    <div class="row"><b>What it is</b><span>Signed tokens prove identity statelessly. Refresh tokens let access tokens be short-lived without forcing re-login.</span></div>
+    <div class="row"><b>Why it is cool</b><span>It is the difference between "a stolen token works for 7 days" and "a stolen token works for 15 minutes and can be revoked".</span></div>
+    <div class="row"><b>In this project</b><span>HS256-pinned 7-day JWT in sessionStorage. Refresh tokens are the top security item still open.</span></div>
+    <div class="row"><b>Industry usage</b><span>OAuth 2.0 / OpenID Connect providers (Auth0, Cognito, Google).</span></div>
+    <div class="row"><b>Learn next</b><span>httpOnly + SameSite cookies · token rotation · revocation lists · CSRF</span></div>
+    <div class="row"><b>Resources</b><span>Docs: jwt.io/introduction · OWASP JSON Web Token Cheat Sheet · YouTube: Hussein Nasser on JWT and sessions</span></div>
+    <div class="row"><b>Time</b><span>1-2 weeks to implement properly</span></div></div>
+
+  <div class="concept"><div class="top"><h4>Unit &amp; Integration Testing</h4><span class="lvl b">Beginner</span></div>
+    <div class="row"><b>What it is</b><span>Unit: one function in isolation. Integration: several pieces together, such as HTTP + middleware + validation.</span></div>
+    <div class="row"><b>Why it is cool</b><span>Tests are what let you refactor 1,199 lines without fear. They are your safety net and your documentation.</span></div>
+    <div class="row"><b>In this project</b><span>26 backend tests (node:test + supertest), 14 frontend tests (Jest + Testing Library).</span></div>
+    <div class="row"><b>Industry usage</b><span>Required for merge in almost every professional team.</span></div>
+    <div class="row"><b>Learn next</b><span>mongodb-memory-server · test doubles · coverage · Playwright end-to-end tests</span></div>
+    <div class="row"><b>Resources</b><span>Docs: nodejs.org/api/test.html, testing-library.com · Blog: Kent C. Dodds, "The Testing Trophy" · Course: TestingJavaScript.com</span></div>
+    <div class="row"><b>Time</b><span>1-2 weeks</span></div></div>
+
+  <div class="concept"><div class="top"><h4>GitHub Actions / CI/CD</h4><span class="lvl b">Beginner</span></div>
+    <div class="row"><b>What it is</b><span>YAML workflows that run jobs (test, build, deploy) on repository events.</span></div>
+    <div class="row"><b>Why it is cool</b><span>Your repo gets a robot teammate that checks every change for free.</span></div>
+    <div class="row"><b>In this project</b><span>Three jobs with dependency caching and a gated Docker build.</span></div>
+    <div class="row"><b>Industry usage</b><span>GitHub Actions, GitLab CI, Jenkins, CircleCI.</span></div>
+    <div class="row"><b>Learn next</b><span>Matrix builds · environments + secrets · branch protection · deploy on tag</span></div>
+    <div class="row"><b>Resources</b><span>Docs: docs.github.com/actions · YouTube: TechWorld with Nana, GitHub Actions tutorial</span></div>
+    <div class="row"><b>Time</b><span>4-8 hours</span></div></div>
+
+  <div class="concept"><div class="top"><h4>Docker</h4><span class="lvl i">Intermediate</span></div>
+    <div class="row"><b>What it is</b><span>Packaging an application and its runtime into an image that runs identically anywhere.</span></div>
+    <div class="row"><b>Why it is cool</b><span><code>docker compose up</code> gives a new teammate the whole stack, including MongoDB, in one command.</span></div>
+    <div class="row"><b>In this project</b><span>Multi-stage API and web images, non-root user, HEALTHCHECK, nginx SPA config, compose file.</span></div>
+    <div class="row"><b>Industry usage</b><span>The deployment unit for Kubernetes, ECS, Cloud Run, Render and Fly.io.</span></div>
+    <div class="row"><b>Learn next</b><span>Layer caching · image scanning · volumes and networks · Kubernetes basics</span></div>
+    <div class="row"><b>Resources</b><span>Docs: docs.docker.com/get-started · YouTube: TechWorld with Nana, Docker tutorial · Course: Frontend Masters, "Complete Intro to Containers"</span></div>
+    <div class="row"><b>Time</b><span>1-2 weeks</span></div></div>
+
+  <div class="concept"><div class="top"><h4>Rate Limiting &amp; Redis</h4><span class="lvl i">Intermediate</span></div>
+    <div class="row"><b>What it is</b><span>Throttling clients per time window; Redis is the in-memory store that makes it work across many servers.</span></div>
+    <div class="row"><b>Why it is cool</b><span>The same Redis instance can back rate limits, caches, sessions and job queues.</span></div>
+    <div class="row"><b>In this project</b><span>Limits and cache are in-process today. Moving them to Redis is the main scalability step.</span></div>
+    <div class="row"><b>Industry usage</b><span>API gateways (Stripe, GitHub), CDNs, login protection.</span></div>
+    <div class="row"><b>Learn next</b><span>Token bucket · sliding window · rate-limit-redis · cache-aside and TTLs</span></div>
+    <div class="row"><b>Resources</b><span>Docs: redis.io/docs · Blog: Stripe engineering, "Scaling your API with rate limiters" · YouTube: Hussein Nasser on caching</span></div>
+    <div class="row"><b>Time</b><span>1 week</span></div></div>
+
+  <div class="concept"><div class="top"><h4>Logging, Monitoring &amp; Observability</h4><span class="lvl a">Advanced</span></div>
+    <div class="row"><b>What it is</b><span>Logs (what happened), metrics (how much, how fast) and traces (where time went across services).</span></div>
+    <div class="row"><b>Why it is cool</b><span>You can answer "why was this user's request slow?" in seconds instead of guessing.</span></div>
+    <div class="row"><b>In this project</b><span>Structured Pino logs with request IDs. No metrics, tracing or alerting yet.</span></div>
+    <div class="row"><b>Industry usage</b><span>Datadog, Grafana, New Relic, Sentry; OpenTelemetry as the open standard.</span></div>
+    <div class="row"><b>Learn next</b><span>OpenTelemetry · RED metrics · SLOs and error budgets · Sentry for frontend errors</span></div>
+    <div class="row"><b>Resources</b><span>Docs: getpino.io, opentelemetry.io/docs · Book: Google SRE book (free online) · Blog: Charity Majors on observability</span></div>
+    <div class="row"><b>Time</b><span>2-3 weeks</span></div></div>
+
+  <div class="concept"><div class="top"><h4>React Query (TanStack Query)</h4><span class="lvl i">Intermediate</span></div>
+    <div class="row"><b>What it is</b><span>A library that manages server data: fetching, caching, refetching and mutation state.</span></div>
+    <div class="row"><b>Why it is cool</b><span>It would replace most of <code>useBoards</code> and the hand-written loading/error state across pages.</span></div>
+    <div class="row"><b>In this project</b><span>Not used yet. Server state is still hand-rolled in hooks and components.</span></div>
+    <div class="row"><b>Industry usage</b><span>Default choice for server state in modern React apps.</span></div>
+    <div class="row"><b>Learn next</b><span>Query keys · invalidation · optimistic updates · Suspense</span></div>
+    <div class="row"><b>Resources</b><span>Docs: tanstack.com/query · Blog: TkDodo's "Practical React Query" series</span></div>
+    <div class="row"><b>Time</b><span>1 week</span></div></div>
+
+  <div class="concept"><div class="top"><h4>Design Systems</h4><span class="lvl i">Intermediate</span></div>
+    <div class="row"><b>What it is</b><span>Shared tokens (colours, spacing, type) and components (Button, Input, Dialog) used everywhere.</span></div>
+    <div class="row"><b>Why it is cool</b><span>Change the primary colour once and the whole app updates. Consistency becomes free.</span></div>
+    <div class="row"><b>In this project</b><span>Started: <code>Skeleton</code>, <code>EmptyState</code>, <code>ErrorState</code>. Buttons and inputs are still styled inline.</span></div>
+    <div class="row"><b>Industry usage</b><span>Atlassian Design System, Stripe, GitHub Primer, shadcn/ui.</span></div>
+    <div class="row"><b>Learn next</b><span>Design tokens in Tailwind config · variant APIs (cva) · Storybook</span></div>
+    <div class="row"><b>Resources</b><span>Docs: storybook.js.org, ui.shadcn.com · Site: designsystemsrepo.com</span></div>
+    <div class="row"><b>Time</b><span>1-2 weeks</span></div></div>
+
+  <div class="concept"><div class="top"><h4>Accessibility (a11y)</h4><span class="lvl b">Beginner</span></div>
+    <div class="row"><b>What it is</b><span>Building interfaces that work for keyboard, screen-reader and low-vision users.</span></div>
+    <div class="row"><b>Why it is cool</b><span>Accessible markup is also better for SEO, testing (Testing Library queries by role) and every user.</span></div>
+    <div class="row"><b>In this project</b><span>Skip link, <code>aria-current</code>, dialog roles, status regions, focus rings, reduced motion.</span></div>
+    <div class="row"><b>Industry usage</b><span>Legal requirement in many markets; WCAG 2.2 AA is the usual target.</span></div>
+    <div class="row"><b>Learn next</b><span>Focus trapping · ARIA authoring practices · colour contrast · axe DevTools</span></div>
+    <div class="row"><b>Resources</b><span>Docs: w3.org/WAI/WCAG22/quickref, w3.org/WAI/ARIA/apg · Course: web.dev "Learn Accessibility"</span></div>
+    <div class="row"><b>Time</b><span>1 week</span></div></div>
+
+  <div class="concept"><div class="top"><h4>Database Indexing &amp; Concurrency</h4><span class="lvl a">Advanced</span></div>
+    <div class="row"><b>What it is</b><span>Indexes make lookups fast and can enforce uniqueness; concurrency control keeps parallel writes correct.</span></div>
+    <div class="row"><b>Why it is cool</b><span>One line of index definition fixed a race condition that no amount of application code could.</span></div>
+    <div class="row"><b>In this project</b><span>Partial unique index on board names; unique daily activity; compound indexes on userId.</span></div>
+    <div class="row"><b>Industry usage</b><span>Every high-traffic system; a staple of system-design interviews.</span></div>
+    <div class="row"><b>Learn next</b><span>explain() plans · compound index order (ESR rule) · transactions · optimistic locking</span></div>
+    <div class="row"><b>Resources</b><span>Docs: mongodb.com/docs/manual/indexes · Book: "Designing Data-Intensive Applications" (Kleppmann)</span></div>
+    <div class="row"><b>Time</b><span>2-3 weeks</span></div></div>
+</section>
+
+<!-- ============ SECTION 6 ============ -->
+<section class="chapter" id="s6">
+  <div class="kicker">Section 6</div>
+  <h1>Recruiter View</h1>
+
+  <h2>Before these improvements</h2>
+  <div class="grid2">
+    <div class="card"><h4>Concerns a reviewer raised</h4><ul class="small">
+      <li>1,199-line <code>server.js</code> god file</li>
+      <li>One broken default test; no CI; no Docker</li>
+      <li>Deploy config pointed at a missing health endpoint</li>
+      <li>Paid API endpoints open to anonymous callers</li>
+      <li>Streak could be faked with one request</li>
+      <li>No frontend route guards</li>
+      <li>Leftover debug route and unused dependencies</li>
+      <li>Boilerplate README</li>
+    </ul></div>
+    <div class="card"><h4>How it read</h4><p class="small">A strong <b>feature demo</b>: real features, deployed, unusually security-aware for a junior,
+      but with no evidence the candidate could build software a team could maintain. Verdict: <b>SDE-1, borderline at mid-size companies</b>.</p></div>
+  </div>
+
+  <h2>After these improvements</h2>
+  <table>
+    <tr><th>Concern</th><th style="width:22mm">Status</th><th>Evidence</th></tr>
+    <tr><td>God file</td><td><b style="color:var(--green)">Resolved</b></td><td>Layered backend; 40-line entry point</td></tr>
+    <tr><td>No tests / CI</td><td><b style="color:var(--green)">Resolved</b></td><td>40 tests; three-job GitHub Actions pipeline</td></tr>
+    <tr><td>Broken deploy check</td><td><b style="color:var(--green)">Resolved</b></td><td><code>/api/health</code> + <code>/api/ready</code></td></tr>
+    <tr><td>Open paid proxies, streak farming, URL injection</td><td><b style="color:var(--green)">Resolved</b></td><td>Auth + per-user limits; server-derived activity; http(s)-only URLs</td></tr>
+    <tr><td>No route guards</td><td><b style="color:var(--green)">Resolved</b></td><td><code>RequireAuth</code> + tests for 5 routes</td></tr>
+    <tr><td>Token lifecycle</td><td><b style="color:var(--amber)">Partial</b></td><td>Algorithm pinned, 401 handled; no refresh or revocation</td></tr>
+    <tr><td>DB-backed tests</td><td><b style="color:var(--amber)">Partial</b></td><td>HTTP tests stop before the database</td></tr>
+    <tr><td>Large components</td><td><b style="color:var(--amber)">Partial</b></td><td>Kanban helpers extracted; Dashboard untouched</td></tr>
+    <tr><td>Horizontal scale</td><td><b style="color:var(--red)">Open</b></td><td>In-memory limiter and cache</td></tr>
+  </table>
+
+  <h2>What level does it look like now?</h2>
+  <div class="diagram">
+    <div class="flow">
+      <div class="node">Intern</div><span class="arrow">→</span>
+      <div class="node">Junior</div><span class="arrow">→</span>
+      <div class="node dark"><b>SDE-1</b>strong</div><span class="arrow">→</span>
+      <div class="node" style="border-style:dashed">SDE-2<br/><span class="small">conversations credible</span></div><span class="arrow">→</span>
+      <div class="node">Senior</div>
+    </div>
+    <div class="cap">The codebase now reads as a strong SDE-1 project, and gives you material to hold SDE-2-style design conversations.</div>
+  </div>
+  <p><b>Why not SDE-2 outright?</b> SDE-2 signals usually include owning a system at scale: distributed state (Redis), a full auth
+    lifecycle, DB-backed integration tests, metrics and alerting, and evidence of trade-offs made under real load. The codebase
+    now <i>names</i> these gaps clearly, which is a mature signal, but has not yet <i>closed</i> them.</p>
+  <div class="callout"><b>Important:</b> a recruiter will ask you to explain every change. The level this project earns depends on
+    whether you can defend the decisions in Sections 3 and 4 without notes. Code that you cannot explain counts against you.</div>
+</section>
+
+<!-- ============ SECTION 7 ============ -->
+<section class="chapter" id="s7">
+  <div class="kicker">Section 7</div>
+  <h1>Portfolio Value</h1>
+
+  <h2>Resume bullets</h2>
+  <div class="card"><ul>
+    <li>Built <b>PinLearn</b>, a full-stack learning tracker (React 19, Express 5, MongoDB) with boards, notes, Kanban, quizzes and daily streaks, deployed on Vercel and Render.</li>
+    <li>Refactored a 1,200-line Express monolith into a layered architecture (routes, controllers, services) with Zod validation and centralised error handling, enabling 26 backend tests.</li>
+    <li>Closed four security issues, including unauthenticated paid-API proxies, client-forgeable streaks and stored <code>javascript:</code> URLs; added per-user rate limits and log redaction.</li>
+    <li>Fixed a board-name race condition with a partial unique index; capped embedded arrays to stay within MongoDB document limits.</li>
+    <li>Set up GitHub Actions CI (tests, build, audit, Docker) and multi-stage Docker images with liveness and readiness health checks.</li>
+    <li>Added route guards, global session-expiry handling, an error boundary, skeleton loaders and WCAG-aligned navigation and dialogs.</li>
+  </ul></div>
+  <p class="small muted">Pick three or four bullets that match the role. Keep numbers you can defend in an interview.</p>
+
+  <h2>Screenshots to include</h2>
+  <table>
+    <tr><th style="width:40mm">Screenshot</th><th>What it proves</th></tr>
+    <tr><td>Dashboard (light + dark)</td><td>Visual polish, theming, streak calendar</td></tr>
+    <tr><td>Boards with progress</td><td>Core CRUD and progress tracking</td></tr>
+    <tr><td>Kanban mid-drag</td><td>Complex interaction (drag and drop)</td></tr>
+    <tr><td>Mobile nav open</td><td>Responsive design</td></tr>
+    <tr><td>Skeleton + empty state</td><td>Attention to UX states, not just happy paths</td></tr>
+    <tr><td>Green CI run</td><td>Engineering discipline</td></tr>
+    <tr><td>Architecture diagram</td><td>Systems thinking (reuse the one in the README)</td></tr>
+  </table>
+
+  <h2>Live demo script (5 minutes)</h2>
+  <div class="diagram">
+    <div class="pipeline">
+      <span class="chip">1 · Sign up, pick interests</span><span class="arrow">→</span>
+      <span class="chip">2 · Dashboard, save a video</span><span class="arrow">→</span>
+      <span class="chip">3 · Streak updates</span><span class="arrow">→</span>
+      <span class="chip">4 · Board → resource → note</span><span class="arrow">→</span>
+      <span class="chip">5 · Kanban drag</span><span class="arrow">→</span>
+      <span class="chip">6 · Dark mode + mobile</span><span class="arrow">→</span>
+      <span class="chip g">7 · Open DevTools: show error JSON + X-Request-Id</span>
+    </div>
+    <div class="cap">Step 7 is the differentiator: show a 400 validation error and the request ID, then explain the error pipeline.</div>
+  </div>
+
+  <h2>Architecture decisions worth discussing</h2>
+  <div class="grid2">
+    <div class="card"><h4>Why server-derived streaks?</h4><p class="small">Security thinking: trust boundaries and what the client can be allowed to claim.</p></div>
+    <div class="card"><h4>Why a partial unique index?</h4><p class="small">Concurrency plus safe migration of existing data.</p></div>
+    <div class="card"><h4>Why embed resources in boards?</h4><p class="small">Read pattern fits; caps protect the 16 MB limit; know when you would split them out.</p></div>
+    <div class="card"><h4>Why sessionStorage and not cookies?</h4><p class="small">Honest trade-off: simpler, tab-scoped, but XSS-readable. Explain the refresh-cookie upgrade path.</p></div>
+    <div class="card"><h4>Why request coalescing?</h4><p class="small">Cost control on a quota-limited API; a small idea with a real-world payoff.</p></div>
+    <div class="card"><h4>What breaks at 10× traffic?</h4><p class="small">In-memory limits and cache, embedded arrays, synchronous streak reads. Have the answer ready.</p></div>
+  </div>
+</section>
+
+<!-- ============ SECTION 8 ============ -->
+<section class="chapter" id="s8">
+  <div class="kicker">Section 8</div>
+  <h1>Final Project Assessment</h1>
+  <p class="lead">Reviewer judgement on a 10-point scale. "Before" is from the initial code review; "After" reflects the current codebase.</p>
+
+  <table class="scoretable">
+    <tr><th>Area</th><th>Before</th><th></th><th>After</th><th></th></tr>
+    <tr><td>Architecture</td><td>4</td><td><div class="bar before"><i style="width:40%"></i></div></td><td>7.5</td><td><div class="bar"><i style="width:75%"></i></div></td></tr>
+    <tr><td>Frontend</td><td>6</td><td><div class="bar before"><i style="width:60%"></i></div></td><td>7</td><td><div class="bar"><i style="width:70%"></i></div></td></tr>
+    <tr><td>Backend</td><td>5.5</td><td><div class="bar before"><i style="width:55%"></i></div></td><td>8</td><td><div class="bar"><i style="width:80%"></i></div></td></tr>
+    <tr><td>Testing</td><td>1</td><td><div class="bar before"><i style="width:10%"></i></div></td><td>6</td><td><div class="bar"><i style="width:60%"></i></div></td></tr>
+    <tr><td>Security</td><td>5.5</td><td><div class="bar before"><i style="width:55%"></i></div></td><td>7.5</td><td><div class="bar"><i style="width:75%"></i></div></td></tr>
+    <tr><td>Design / UX</td><td>6</td><td><div class="bar before"><i style="width:60%"></i></div></td><td>7</td><td><div class="bar"><i style="width:70%"></i></div></td></tr>
+    <tr><td>Scalability</td><td>3.5</td><td><div class="bar before"><i style="width:35%"></i></div></td><td>5</td><td><div class="bar"><i style="width:50%"></i></div></td></tr>
+    <tr><td>Production readiness</td><td>3.5</td><td><div class="bar before"><i style="width:35%"></i></div></td><td>7</td><td><div class="bar"><i style="width:70%"></i></div></td></tr>
+    <tr><th>Overall</th><th>4.4</th><th><div class="bar before"><i style="width:44%"></i></div></th><th>6.9</th><th><div class="bar"><i style="width:69%"></i></div></th></tr>
+  </table>
+
+  <h2>Why the scores are not higher</h2>
+  <div class="grid2">
+    <div class="card"><h4>Testing (6)</h4><p class="small">Good unit and boundary coverage, but no DB-backed or end-to-end tests. Signup → save → streak is not tested as one flow.</p></div>
+    <div class="card"><h4>Scalability (5)</h4><p class="small">Single-instance assumptions: memory-based rate limits and cache, no pagination on boards.</p></div>
+    <div class="card"><h4>Frontend (7)</h4><p class="small">Large page components, no server-state library, CRA (deprecated) instead of Vite.</p></div>
+    <div class="card"><h4>Security (7.5)</h4><p class="small">Long-lived JWT with no refresh or revocation; token readable by XSS.</p></div>
+  </div>
+
+  <h2>Next five moves for the biggest gain</h2>
+  <table>
+    <tr><th style="width:8mm">#</th><th>Move</th><th style="width:40mm">Lifts</th></tr>
+    <tr><td>1</td><td>DB-backed integration tests with mongodb-memory-server</td><td>Testing, confidence</td></tr>
+    <tr><td>2</td><td>Short access token + httpOnly refresh cookie with rotation</td><td>Security</td></tr>
+    <tr><td>3</td><td>Redis for rate limits and the YouTube cache</td><td>Scalability</td></tr>
+    <tr><td>4</td><td>React Query + split Dashboard and Kanban into feature folders</td><td>Frontend, maintainability</td></tr>
+    <tr><td>5</td><td>Shared Button / Input / Dialog components with focus trapping</td><td>Design, accessibility</td></tr>
+  </table>
+
+  <div class="callout good" style="margin-top:6mm">
+    <b>Bottom line.</b> The project has moved from "a candidate who can build features" to "a candidate who builds software a team can
+    maintain, test and deploy". Learn the concepts in Section 5 well enough to explain them without notes, and this becomes a
+    project that carries interviews rather than just appearing on a resume.
+  </div>
+</section>
+
+</body>
+</html>

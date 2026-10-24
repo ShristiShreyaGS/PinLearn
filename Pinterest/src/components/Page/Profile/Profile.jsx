@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import "./Profile.css";
 import PageBackdrop from "../PageBackdrop";
 import { getProfile, updateProfile } from "../../../api/user";
+import { Skeleton } from "../../ui/Skeleton";
+import { EmptyState, ErrorState } from "../../ui/StateViews";
 
 const interests = [
   "React",
@@ -47,15 +49,31 @@ function Profile() {
   }, []);
 
   if (loading) {
-    return <div>Loading profile...</div>;
+    return (
+      <main role="status" aria-busy="true" className="mx-auto max-w-3xl px-4 py-10">
+        <span className="sr-only">Loading profile</span>
+        <Skeleton className="h-24 w-24 rounded-full" />
+        <Skeleton className="mt-6 h-8 w-56" />
+        <Skeleton className="mt-3 h-4 w-full" />
+        <Skeleton className="mt-2 h-4 w-2/3" />
+      </main>
+    );
   }
 
   if (error) {
-    return <div>{error}</div>;
+    return (
+      <main className="mx-auto max-w-xl px-4 py-16">
+        <ErrorState title="Unable to load profile" message={error} onRetry={() => window.location.reload()} />
+      </main>
+    );
   }
 
   if (!profile) {
-    return <div>No profile found.</div>;
+    return (
+      <main className="mx-auto max-w-xl px-4 py-16">
+        <EmptyState icon="☺" title="No profile found" description="Try signing out and back in." />
+      </main>
+    );
   }
 
   const startEditing = () => {

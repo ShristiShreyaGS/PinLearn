@@ -4,7 +4,6 @@ import { addNote, deleteNote, updateNote } from "../../../api/notes";
 import { formatDate, getFullTimestamp, extractYouTubeId } from "../../../utils/dateUtils";
 import "./ResourceDetails.css";
 import { updateResourceStatus } from "../../../api/progress";
-import { markActivity } from "../../../api/streak";
 import PageBackdrop from "../PageBackdrop";
 
 function ResourceDetails({
@@ -455,9 +454,6 @@ function ResourceDetails({
                                             const newStatus = event.target.value;
                                             const response = await updateResourceStatus(boardId, resource.id, newStatus);
                                             updateBoardResource(boardId, resource.id, response.resource);
-                                            if (newStatus === "completed") {
-                                                markActivity().catch(() => {});
-                                            }
                                         } catch (error) {
                                             console.error("Failed to update status:", error);
                                         }
